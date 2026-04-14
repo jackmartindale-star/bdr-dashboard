@@ -1162,7 +1162,9 @@ function formatDate(d) {
 }
 
 function formatPct(v) {
-  return v != null ? v.toFixed(1) + '%' : '—';
+  if (v == null) return '—';
+  const truncated = Math.floor(v * 100) / 100;
+  return truncated.toFixed(2) + '%';
 }
 
 function formatNum(v) {
@@ -1324,7 +1326,7 @@ function buildKPICard(label, value, delta, isPct) {
   if (delta !== null && delta !== undefined) {
     const cls = delta > 0 ? 'up' : delta < 0 ? 'down' : 'neutral';
     const arrow = delta > 0 ? '&#9650;' : delta < 0 ? '&#9660;' : '&#8212;';
-    const formatted = isPct ? (delta > 0 ? '+' : '') + delta.toFixed(1) + ' pts' : (delta > 0 ? '+' : '') + Math.round(delta);
+    const formatted = isPct ? (delta > 0 ? '+' : '') + (Math.floor(delta * 100) / 100).toFixed(2) + ' pts' : (delta > 0 ? '+' : '') + Math.round(delta);
     deltaHtml = `<div class="delta ${cls}">${arrow} ${formatted} vs prev week</div>`;
   }
   return `<div class="kpi-card"><div class="label">${label}</div><div class="value">${value}</div>${deltaHtml}</div>`;
@@ -2073,10 +2075,10 @@ function updateEntryCalcs(input) {
   const convos = parseInt(row.querySelector('.entry-convos').value) || 0;
   const meetings = parseInt(row.querySelector('.entry-meetings').value) || 0;
   const cells = row.querySelectorAll('.calc-cell');
-  cells[0].textContent = calls > 0 ? (connects/calls*100).toFixed(1) + '%' : '0%';
-  cells[1].textContent = connects > 0 ? (convos/connects*100).toFixed(1) + '%' : '0%';
-  cells[2].textContent = convos > 0 ? (meetings/convos*100).toFixed(1) + '%' : '0%';
-  cells[3].textContent = calls > 0 ? (meetings/calls*100).toFixed(1) + '%' : '0%';
+  cells[0].textContent = calls > 0 ? (Math.floor(connects/calls*10000)/100).toFixed(2) + '%' : '0.00%';
+  cells[1].textContent = connects > 0 ? (Math.floor(convos/connects*10000)/100).toFixed(2) + '%' : '0.00%';
+  cells[2].textContent = convos > 0 ? (Math.floor(meetings/convos*10000)/100).toFixed(2) + '%' : '0.00%';
+  cells[3].textContent = calls > 0 ? (Math.floor(meetings/calls*10000)/100).toFixed(2) + '%' : '0.00%';
 }
 
 function addWeekFromForm() {
