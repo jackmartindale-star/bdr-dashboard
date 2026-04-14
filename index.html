@@ -468,8 +468,8 @@ tr.week-spacer:hover td { background: transparent; }
   background: var(--white);
   border-radius: 16px;
   padding: 32px;
-  max-width: 700px;
-  width: 90%;
+  max-width: 860px;
+  width: 95%;
   max-height: 85vh;
   overflow-y: auto;
 }
@@ -549,11 +549,18 @@ tr.week-spacer:hover td { background: transparent; }
 
 .entry-table input {
   width: 100%;
+  min-width: 60px;
   padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 13px;
   text-align: right;
+}
+
+.entry-table input[type="number"]::-webkit-inner-spin-button,
+.entry-table input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .entry-table .rep-name-cell {
@@ -2022,10 +2029,10 @@ function populateEntryForm() {
   reps.forEach(name => {
     tbody.innerHTML += `<tr>
       <td class="rep-name-cell"><input type="text" value="${name}" class="entry-name" style="text-align:left"></td>
-      <td><input type="number" class="entry-calls" value="0" min="0" oninput="updateEntryCalcs(this)"></td>
-      <td><input type="number" class="entry-connects" value="0" min="0" oninput="updateEntryCalcs(this)"></td>
-      <td><input type="number" class="entry-convos" value="0" min="0" oninput="updateEntryCalcs(this)"></td>
-      <td><input type="number" class="entry-meetings" value="0" min="0" oninput="updateEntryCalcs(this)"></td>
+      <td><input type="text" inputmode="numeric" pattern="[0-9]*" class="entry-calls" value="0" oninput="updateEntryCalcs(this)"></td>
+      <td><input type="text" inputmode="numeric" pattern="[0-9]*" class="entry-connects" value="0" oninput="updateEntryCalcs(this)"></td>
+      <td><input type="text" inputmode="numeric" pattern="[0-9]*" class="entry-convos" value="0" oninput="updateEntryCalcs(this)"></td>
+      <td><input type="text" inputmode="numeric" pattern="[0-9]*" class="entry-meetings" value="0" oninput="updateEntryCalcs(this)"></td>
       <td class="calc-cell">0%</td>
       <td class="calc-cell">0%</td>
       <td class="calc-cell">0%</td>
@@ -2045,10 +2052,10 @@ function addEntryRow() {
   const row = document.createElement('tr');
   row.innerHTML = `
     <td class="rep-name-cell"><input type="text" value="" class="entry-name" style="text-align:left" placeholder="Rep name"></td>
-    <td><input type="number" class="entry-calls" value="0" min="0" oninput="updateEntryCalcs(this)"></td>
-    <td><input type="number" class="entry-connects" value="0" min="0" oninput="updateEntryCalcs(this)"></td>
-    <td><input type="number" class="entry-convos" value="0" min="0" oninput="updateEntryCalcs(this)"></td>
-    <td><input type="number" class="entry-meetings" value="0" min="0" oninput="updateEntryCalcs(this)"></td>
+    <td><input type="text" inputmode="numeric" pattern="[0-9]*" class="entry-calls" value="0" oninput="updateEntryCalcs(this)"></td>
+    <td><input type="text" inputmode="numeric" pattern="[0-9]*" class="entry-connects" value="0" oninput="updateEntryCalcs(this)"></td>
+    <td><input type="text" inputmode="numeric" pattern="[0-9]*" class="entry-convos" value="0" oninput="updateEntryCalcs(this)"></td>
+    <td><input type="text" inputmode="numeric" pattern="[0-9]*" class="entry-meetings" value="0" oninput="updateEntryCalcs(this)"></td>
     <td class="calc-cell">0%</td>
     <td class="calc-cell">0%</td>
     <td class="calc-cell">0%</td>
