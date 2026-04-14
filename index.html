@@ -918,7 +918,7 @@ tr.week-spacer:hover td { background: transparent; }
       </div>
       <div class="drop-zone" id="drop-zone">
         <p>Drop a CSV here or click to browse</p>
-        <p style="font-size:11px;margin-top:8px">Format: Name, Calls, Connects, Conversations, Meetings Booked</p>
+        <p style="font-size:11px;margin-top:8px">Accepts the same format as the main CSV, or a simple: Name, Calls, Connects, Conversations, Meetings</p>
         <input type="file" accept=".csv" id="csv-file-input">
       </div>
       <div id="upload-preview" style="margin-top:16px"></div>
@@ -2018,6 +2018,9 @@ function openModal() {
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('visible');
+  document.getElementById('upload-preview').innerHTML = '';
+  uploadedWeekData = null;
+  document.getElementById('csv-file-input').value = '';
 }
 
 function populateEntryForm() {
@@ -2136,23 +2139,66 @@ function handleUploadFile(file) {
     const result = Papa.parse(e.target.result, { skipEmptyLines: true });
     uploadedWeekData = {};
     const preview = document.getElementById('upload-preview');
+
+    // Detect format: full CSV (9 cols with rates) or simple (5 cols)
+    // Full format: Name, Calls, Connects, Connect Rate, Conversations, Conversation Rate, Meetings Booked, Booking Rate, Bookings/Call
+    // Simple format: Name, Calls, Connects, Conversations, Meetings
+    const rows = result.data;
+
+    // Find column indices by checking for a header row or inferring from column count
+    let callsIdx = 1, connectsIdx = 2, convosIdx = 3, meetingsIdx = 4;
+
+    // Check if there's a header row
+    const firstRow = rows[0] || [];
+    const headerCheck = firstRow.map(c => (c || '').trim().toLowerCase());
+    const hasHeader = headerCheck.some(h => h === 'calls' || h === 'connects');
+
+    if (hasHeader) {
+      // Map columns by header name
+      const ci = headerCheck.indexOf('calls');
+      const coi = headerCheck.indexOf('connects');
+      const cvi = headerCheck.some(h => h === 'conversations') ? headerCheck.indexOf('conversations') : -1;
+      const mi = headerCheck.some(h => h.includes('meeting')) ? headerCheck.findIndex(h => h.includes('meeting')) : -1;
+
+      if (ci >= 0) callsIdx = ci;
+      if (coi >= 0) connectsIdx = coi;
+      if (cvi >= 0) convosIdx = cvi;
+      if (mi >= 0) meetingsIdx = mi;
+    } else if (firstRow.length >= 9) {
+      // Assume full format: Name, Calls, Connects, Rate, Conversations, Rate, Meetings, Rate, Rate
+      callsIdx = 1; connectsIdx = 2; convosIdx = 4; meetingsIdx = 6;
+    }
+    // else assume simple 5-col format (defaults above)
+
     let html = '<table class="entry-table"><thead><tr><th>Rep</th><th>Calls</th><th>Connects</th><th>Conversations</th><th>Meetings</th></tr></thead><tbody>';
 
-    result.data.forEach(row => {
-      if (row.length < 5) return;
-      const name = (row[0] || '').trim();
-      if (!name || name === 'Name' || name === 'Rep' || name === 'Total') return;
-      const calls = parseInt(row[1]) || 0;
-      const connects = parseInt(row[2]) || 0;
-      const convos = parseInt(row[3]) || 0;
-      const meetings = parseInt(row[4]) || 0;
+    const startIdx = hasHeader ? 1 : 0;
+    for (let i = startIdx; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length < 3) continue;
+      const name = (row[0] || '').trim().replace(/^"|"$/g, '');
+      if (!name || name === 'Total' || name === 'Aggregate') continue;
+      // Skip date lines and header lines
+      if (name.match(/^[A-Z][a-z]+ \d{1,2},\s*\d{4}$/) || name === 'Cono Length') continue;
+      if ((row[1] || '').trim().toLowerCase() === 'calls') continue;
+
+      const calls = parseInt((row[callsIdx] || '').replace(/[^0-9]/g, '')) || 0;
+      const connects = parseInt((row[connectsIdx] || '').replace(/[^0-9]/g, '')) || 0;
+      const convos = parseInt((row[convosIdx] || '').replace(/[^0-9]/g, '')) || 0;
+      const meetings = parseInt((row[meetingsIdx] || '').replace(/[^0-9]/g, '')) || 0;
+
       if (calls > 0) {
         uploadedWeekData[name] = buildRepData(calls, connects, convos, meetings);
         html += `<tr><td>${name}</td><td>${calls}</td><td>${connects}</td><td>${convos}</td><td>${meetings}</td></tr>`;
       }
-    });
+    }
     html += '</tbody></table>';
-    preview.innerHTML = '<h4 style="margin-bottom:8px;font-size:13px;color:var(--blue)">Preview</h4>' + html;
+
+    if (Object.keys(uploadedWeekData).length > 0) {
+      preview.innerHTML = '<h4 style="margin-bottom:8px;font-size:13px;color:var(--blue)">Preview</h4>' + html;
+    } else {
+      preview.innerHTML = '<p style="color:var(--red);font-size:13px">No rep data found. Check your CSV format.</p>';
+    }
   };
   reader.readAsText(file);
 }
