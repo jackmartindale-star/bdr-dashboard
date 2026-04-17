@@ -791,18 +791,15 @@ tr.week-header-row:hover td { background: var(--blue); }
         <tbody></tbody>
       </table>
     </div>
-    <div style="margin-top:8px;margin-bottom:4px">
-      <h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-light)">Prior Week Comparison</h3>
-    </div>
-    <div class="chart-grid">
-      <div class="chart-card">
-        <h3>Calls</h3>
-        <div style="height:220px;position:relative"><canvas id="thisweek-calls-chart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>Meetings Booked</h3>
-        <div style="height:220px;position:relative"><canvas id="thisweek-meetings-chart"></canvas></div>
-      </div>
+    <div class="data-table-wrapper" id="prevweek-wrapper" style="display:none">
+      <h3 id="prevweek-title">Previous Week</h3>
+      <table id="prevweek-table">
+        <thead><tr>
+          <th>Rep</th><th>Calls</th><th>Connects</th><th>Connect %</th>
+          <th>Conversations</th><th>Conv %</th><th>Meetings</th><th>Booking %</th><th>Bookings/Call</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
   </section>
 
@@ -1308,10 +1305,31 @@ function renderThisWeek() {
     <td>${formatNum(ft.meetings)}</td><td>${formatPct(ft.bookingRate)}</td><td>${formatPct(ft.bookingsPerCall)}</td>
   </tr>`;
 
-  // Comparison charts
+  // Previous week table
+  const prevWrapper = document.getElementById('prevweek-wrapper');
   if (prev) {
-    renderComparisonChart('thisweek-calls-chart', current, prev, 'calls');
-    renderComparisonChart('thisweek-meetings-chart', current, prev, 'meetings');
+    prevWrapper.style.display = '';
+    document.getElementById('prevweek-title').textContent = 'Previous Week — ' + formatDate(prev.date);
+    const prevTbody = document.querySelector('#prevweek-table tbody');
+    prevTbody.innerHTML = '';
+    const prevReps = filterRepData(prev);
+    Object.entries(prevReps).sort((a,b) => b[1].meetings - a[1].meetings).forEach(([name, d]) => {
+      prevTbody.innerHTML += `<tr>
+        <td><span class="color-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${getRepColor(name)};margin-right:8px"></span>${name}</td>
+        <td>${formatNum(d.calls)}</td><td>${formatNum(d.connects)}</td><td>${formatPct(d.connectRate)}</td>
+        <td>${formatNum(d.conversations)}</td><td>${formatPct(d.conversationRate)}</td>
+        <td>${formatNum(d.meetings)}</td><td>${formatPct(d.bookingRate)}</td><td>${formatPct(d.bookingsPerCall)}</td>
+      </tr>`;
+    });
+    const pft = calcTotal(prevReps);
+    prevTbody.innerHTML += `<tr class="total-row">
+      <td>Total</td>
+      <td>${formatNum(pft.calls)}</td><td>${formatNum(pft.connects)}</td><td>${formatPct(pft.connectRate)}</td>
+      <td>${formatNum(pft.conversations)}</td><td>${formatPct(pft.conversationRate)}</td>
+      <td>${formatNum(pft.meetings)}</td><td>${formatPct(pft.bookingRate)}</td><td>${formatPct(pft.bookingsPerCall)}</td>
+    </tr>`;
+  } else {
+    prevWrapper.style.display = 'none';
   }
 }
 
