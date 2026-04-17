@@ -650,9 +650,30 @@ tr.week-spacer:hover td { background: transparent; }
 
 .add-data-btn:hover { background: #e88d15; }
 
+/* Last updated label */
+.last-updated {
+  margin: 8px 20px 0;
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Week header row in history table */
+tr.week-header-row td {
+  background: var(--blue);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 6px 12px;
+  letter-spacing: 0.3px;
+  border: none;
+}
+tr.week-header-row:hover td { background: var(--blue); }
+
 /* Export button */
 .export-btn {
-  margin: 8px 20px;
+  margin: 16px 20px 8px;
   padding: 10px;
   border-radius: 8px;
   background: transparent;
@@ -698,7 +719,7 @@ tr.week-spacer:hover td { background: transparent; }
 @media (max-width: 768px) {
   .sidebar { width: 60px; }
   .sidebar-header h1, .sidebar-header p, .nav-item span,
-  .sidebar-section, .add-data-btn span, .export-btn { display: none; }
+  .sidebar-section, .export-btn, .last-updated { display: none; }
   .nav-item { justify-content: center; padding: 12px; }
   .nav-item svg { margin-right: 0; }
   .main { margin-left: 60px; padding: 16px; }
@@ -743,13 +764,11 @@ tr.week-spacer:hover td { background: transparent; }
     <!-- Populated by JS -->
   </div>
 
-  <button class="add-data-btn" onclick="openModal()">
-    + <span>Add Data</span>
-  </button>
-
   <button class="export-btn" onclick="exportCSV()">
     Export Full CSV
   </button>
+
+  <div class="last-updated" id="last-updated"></div>
 </aside>
 
 <!-- Main Content -->
@@ -1356,9 +1375,10 @@ function renderHistory() {
   const weeks = getFilteredWeeks();
   if (weeks.length === 0) return;
 
-  // KPIs (aggregated)
+  // KPIs (averages per week)
   const kpis = document.getElementById('history-kpis');
   let totalCalls = 0, totalMeetings = 0, totalConnects = 0, totalConvos = 0;
+  const weekCount = weeks.length;
   weeks.forEach(w => {
     const reps = filterRepData(w);
     Object.values(reps).forEach(r => {
@@ -1368,13 +1388,15 @@ function renderHistory() {
   });
   const avgConnRate = totalCalls > 0 ? (totalConnects / totalCalls * 100) : 0;
   const avgBookRate = totalConvos > 0 ? (totalMeetings / totalConvos * 100) : 0;
+  const avgCallsPerWeek = weekCount > 0 ? Math.round(totalCalls / weekCount) : 0;
+  const avgMeetingsPerWeek = weekCount > 0 ? (totalMeetings / weekCount) : 0;
 
-  kpis.innerHTML = buildKPICard('Total Calls', formatNum(totalCalls), null)
-    + buildKPICard('Total Meetings', formatNum(totalMeetings), null)
+  kpis.innerHTML = buildKPICard('Avg Calls / Week', formatNum(avgCallsPerWeek), null)
+    + buildKPICard('Avg Meetings / Week', avgMeetingsPerWeek.toFixed(1), null)
     + buildKPICard('Avg Connect Rate', formatPct(avgConnRate), null)
     + buildKPICard('Avg Booking Rate', formatPct(avgBookRate), null)
-    + buildKPICard('Bookings/Call', formatPct(totalCalls > 0 ? totalMeetings / totalCalls * 100 : 0), null)
-    + buildKPICard('Weeks', weeks.length.toString(), null);
+    + buildKPICard('Avg Bookings / Call', formatPct(totalCalls > 0 ? totalMeetings / totalCalls * 100 : 0), null)
+    + buildKPICard('Weeks', weekCount.toString(), null);
 
   // Rep averages
   renderHistoryAverages(weeks);
@@ -1611,6 +1633,9 @@ function renderHistoryTable(weeks) {
     const reps = Object.entries(w.reps).filter(([name]) => enabledReps.has(name));
     if (reps.length === 0) return;
 
+    // Week header row at the top of each group
+    html += `<tr class="week-header-row"><td colspan="10">Week of ${formatDate(w.date)}</td></tr>`;
+
     reps.forEach(([name, d]) => {
       html += `<tr>
         <td></td><td>${name}</td>
@@ -1620,10 +1645,10 @@ function renderHistoryTable(weeks) {
       </tr>`;
     });
 
-    // Total row
+    // Total row (no date — it's now in the header)
     const ft = calcTotal(Object.fromEntries(reps));
     html += `<tr class="total-row">
-      <td>${formatDate(w.date)}</td><td>Total</td>
+      <td></td><td>Total</td>
       <td>${formatNum(ft.calls)}</td><td>${formatNum(ft.connects)}</td><td>${formatPct(ft.connectRate)}</td>
       <td>${formatNum(ft.conversations)}</td><td>${formatPct(ft.conversationRate)}</td>
       <td>${formatNum(ft.meetings)}</td><td>${formatPct(ft.bookingRate)}</td><td>${formatPct(ft.bookingsPerCall)}</td>
@@ -2346,6 +2371,14 @@ async function init() {
   buildRepFilters();
   populateRepSelect();
   setupDropZone();
+
+  // Last updated indicator
+  if (allWeeks.length > 0) {
+    const lastWeek = allWeeks[allWeeks.length - 1];
+    const el = document.getElementById('last-updated');
+    if (el) el.textContent = 'Data through ' + formatDate(lastWeek.date);
+  }
+
   renderThisWeek();
 }
 
