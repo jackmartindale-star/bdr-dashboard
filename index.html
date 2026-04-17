@@ -2753,6 +2753,46 @@ function benjaminThink(raw) {
     return `The team's connect rate this week is ${formatPct(t.connectRate)}${comparison}.`;
   }
 
+  // --- PAST N WEEKS COMPARISON ---
+  const pastNMatch = q.match(/(?:past|last)\s+(\d+)\s+weeks?/);
+  if (pastNMatch) {
+    const n = Math.min(parseInt(pastNMatch[1]), allWeeks.length - 1);
+    const pastWeeks = allWeeks.slice(-(n + 1), -1); // n weeks before current
+    if (pastWeeks.length === 0) return `I only have ${allWeeks.length} week(s) of data, not enough for that comparison.`;
+
+    const avg = (metric) => {
+      const vals = pastWeeks.map(w => w.total[metric]).filter(v => v != null);
+      return vals.reduce((a, b) => a + b, 0) / vals.length;
+    };
+
+    if (q.match(/booking rate|book.*rate/)) {
+      const avgRate = avg('bookingRate');
+      const curr = current.total.bookingRate;
+      const diff = curr - avgRate;
+      return `This week's booking rate is ${formatPct(curr)}. The avg over the past ${n} weeks was ${formatPct(avgRate)} — that's ${diff >= 0 ? '+' : ''}${formatPct(Math.abs(diff))} ${diff >= 0 ? 'above' : 'below'} average.`;
+    }
+    if (q.match(/connect rate/)) {
+      const avgRate = avg('connectRate');
+      const curr = current.total.connectRate;
+      const diff = curr - avgRate;
+      return `This week's connect rate is ${formatPct(curr)}. The avg over the past ${n} weeks was ${formatPct(avgRate)} — that's ${diff >= 0 ? '+' : ''}${formatPct(Math.abs(diff))} ${diff >= 0 ? 'above' : 'below'} average.`;
+    }
+    if (q.match(/meeting|booking(?! rate)/)) {
+      const avgMeet = avg('meetings');
+      const curr = current.total.meetings;
+      const diff = curr - avgMeet;
+      return `The team booked ${curr} meetings this week. The avg over the past ${n} weeks was ${avgMeet.toFixed(1)} — that's ${diff >= 0 ? '+' : ''}${(diff).toFixed(1)} ${diff >= 0 ? 'above' : 'below'} average.`;
+    }
+    if (q.match(/call/)) {
+      const avgCalls = avg('calls');
+      const curr = current.total.calls;
+      const diff = curr - avgCalls;
+      return `The team made ${formatNum(curr)} calls this week. The avg over the past ${n} weeks was ${Math.round(avgCalls)} — that's ${diff >= 0 ? '+' : ''}${Math.round(diff)} ${diff >= 0 ? 'above' : 'below'} average.`;
+    }
+    // Generic — give a summary
+    return `Over the past ${n} weeks: avg ${Math.round(avg('calls'))} calls/week, avg ${avg('meetings').toFixed(1)} meetings/week, avg connect rate ${formatPct(avg('connectRate'))}, avg booking rate ${formatPct(avg('bookingRate'))}.`;
+  }
+
   // --- TEAM BOOKING RATE ---
   if (q.match(/booking rate|book.*rate/)) {
     const t = current.total;
