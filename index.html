@@ -725,6 +725,164 @@ tr.week-header-row:hover td { background: var(--blue); }
   .main { margin-left: 60px; padding: 16px; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ============================================================
+   BENJAMIN CHAT BOT
+   ============================================================ */
+#benjamin-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(49,97,149,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  z-index: 1000;
+  transition: background 0.2s, transform 0.15s;
+}
+#benjamin-btn:hover { background: var(--blue-dark); transform: scale(1.07); }
+
+#benjamin-btn .ben-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--yellow);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 2px 5px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+#benjamin-panel {
+  position: fixed;
+  bottom: 96px;
+  right: 28px;
+  width: 340px;
+  max-height: 480px;
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(12px) scale(0.97);
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+#benjamin-panel.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+#benjamin-header {
+  background: var(--blue);
+  color: #fff;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#benjamin-header .ben-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+#benjamin-header .ben-info { flex: 1; }
+#benjamin-header .ben-name {
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#benjamin-header .ben-name span.ben-badge-inline {
+  background: var(--yellow);
+  font-size: 8px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+#benjamin-header .ben-sub {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+
+#benjamin-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 200px;
+  max-height: 320px;
+}
+
+.ben-msg {
+  max-width: 85%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.ben-msg.ben { background: #f0f4f8; color: var(--text); align-self: flex-start; border-bottom-left-radius: 3px; }
+.ben-msg.user { background: var(--blue); color: #fff; align-self: flex-end; border-bottom-right-radius: 3px; }
+
+#benjamin-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+#benjamin-input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+}
+#benjamin-input:focus { border-color: var(--blue); }
+#benjamin-send {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+#benjamin-send:hover { background: var(--blue-dark); }
 </style>
 </head>
 <body>
@@ -911,6 +1069,73 @@ tr.week-header-row:hover td { background: var(--blue); }
       </div>
     </div>
   </section>
+</div>
+
+<!-- Benjamin Chat Bot -->
+<button id="benjamin-btn" onclick="toggleBenjamin()" title="Ask Benjamin">
+  <svg viewBox="0 0 36 36" width="28" height="28" fill="none">
+    <!-- Skin -->
+    <ellipse cx="18" cy="21" rx="10" ry="11" fill="#f5cba7"/>
+    <!-- Long hair -->
+    <ellipse cx="18" cy="16" rx="11" ry="10" fill="#5c3a1e"/>
+    <rect x="7" y="18" width="4" height="10" rx="2" fill="#5c3a1e"/>
+    <rect x="25" y="18" width="4" height="10" rx="2" fill="#5c3a1e"/>
+    <!-- Face -->
+    <ellipse cx="18" cy="22" rx="8.5" ry="9" fill="#f5cba7"/>
+    <!-- Red baseball cap -->
+    <ellipse cx="18" cy="14" rx="11" ry="4.5" fill="#cc2200"/>
+    <rect x="7" y="11" width="22" height="5" rx="2.5" fill="#cc2200"/>
+    <rect x="25" y="13" width="6" height="2.5" rx="1.25" fill="#aa1a00"/>
+    <!-- Glasses -->
+    <rect x="10" y="21" width="6" height="4" rx="2" fill="none" stroke="#444" stroke-width="1.2"/>
+    <rect x="20" y="21" width="6" height="4" rx="2" fill="none" stroke="#444" stroke-width="1.2"/>
+    <line x1="16" y1="23" x2="20" y2="23" stroke="#444" stroke-width="1.2"/>
+    <line x1="8.5" y1="23" x2="10" y2="23" stroke="#444" stroke-width="1.2"/>
+    <line x1="26" y1="23" x2="27.5" y2="23" stroke="#444" stroke-width="1.2"/>
+    <!-- Eyes -->
+    <ellipse cx="13" cy="23" rx="1.5" ry="1.5" fill="#333"/>
+    <ellipse cx="23" cy="23" rx="1.5" ry="1.5" fill="#333"/>
+    <!-- Goatee -->
+    <ellipse cx="18" cy="30" rx="4" ry="2" fill="#5c3a1e" opacity="0.7"/>
+    <ellipse cx="18" cy="29" rx="2.5" ry="1.5" fill="#5c3a1e" opacity="0.9"/>
+  </svg>
+  <span class="ben-badge">beta</span>
+</button>
+
+<div id="benjamin-panel">
+  <div id="benjamin-header">
+    <div class="ben-avatar">
+      <svg viewBox="0 0 36 36" width="22" height="22" fill="none">
+        <ellipse cx="18" cy="21" rx="10" ry="11" fill="#f5cba7"/>
+        <ellipse cx="18" cy="16" rx="11" ry="10" fill="#5c3a1e"/>
+        <rect x="7" y="18" width="4" height="10" rx="2" fill="#5c3a1e"/>
+        <rect x="25" y="18" width="4" height="10" rx="2" fill="#5c3a1e"/>
+        <ellipse cx="18" cy="22" rx="8.5" ry="9" fill="#f5cba7"/>
+        <ellipse cx="18" cy="14" rx="11" ry="4.5" fill="#cc2200"/>
+        <rect x="7" y="11" width="22" height="5" rx="2.5" fill="#cc2200"/>
+        <rect x="25" y="13" width="6" height="2.5" rx="1.25" fill="#aa1a00"/>
+        <rect x="10" y="21" width="6" height="4" rx="2" fill="none" stroke="#fff" stroke-width="1.2"/>
+        <rect x="20" y="21" width="6" height="4" rx="2" fill="none" stroke="#fff" stroke-width="1.2"/>
+        <line x1="16" y1="23" x2="20" y2="23" stroke="#fff" stroke-width="1.2"/>
+        <line x1="8.5" y1="23" x2="10" y2="23" stroke="#fff" stroke-width="1.2"/>
+        <line x1="26" y1="23" x2="27.5" y2="23" stroke="#fff" stroke-width="1.2"/>
+        <ellipse cx="13" cy="23" rx="1.5" ry="1.5" fill="#333"/>
+        <ellipse cx="23" cy="23" rx="1.5" ry="1.5" fill="#333"/>
+        <ellipse cx="18" cy="30" rx="4" ry="2" fill="#5c3a1e" opacity="0.7"/>
+      </svg>
+    </div>
+    <div class="ben-info">
+      <div class="ben-name">Benjamin <span class="ben-badge-inline">beta</span></div>
+      <div class="ben-sub">Ask me about the stats</div>
+    </div>
+  </div>
+  <div id="benjamin-messages"></div>
+  <div id="benjamin-input-row">
+    <input id="benjamin-input" type="text" placeholder="Ask Benjamin something..." onkeydown="if(event.key==='Enter') sendToBenjamin()">
+    <button id="benjamin-send" onclick="sendToBenjamin()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
 </div>
 
 <!-- Add Data Modal -->
@@ -2407,6 +2632,186 @@ function populateRepSelect() {
 }
 
 init();
+
+// ============================================================
+// BENJAMIN — CHAT BOT
+// ============================================================
+let benjaminOpen = false;
+let benjaminGreeted = false;
+
+function toggleBenjamin() {
+  benjaminOpen = !benjaminOpen;
+  document.getElementById('benjamin-panel').classList.toggle('open', benjaminOpen);
+  if (benjaminOpen && !benjaminGreeted) {
+    benjaminGreeted = true;
+    setTimeout(() => benSay("Hey! I'm Benjamin 👋 Ask me anything about the team's stats — like \"Who's leading this week?\" or \"How is Erin doing?\""), 300);
+  }
+  if (benjaminOpen) {
+    setTimeout(() => document.getElementById('benjamin-input').focus(), 350);
+  }
+}
+
+function benSay(msg) {
+  const el = document.createElement('div');
+  el.className = 'ben-msg ben';
+  el.textContent = msg;
+  const box = document.getElementById('benjamin-messages');
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+
+function benUserSay(msg) {
+  const el = document.createElement('div');
+  el.className = 'ben-msg user';
+  el.textContent = msg;
+  const box = document.getElementById('benjamin-messages');
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendToBenjamin() {
+  const input = document.getElementById('benjamin-input');
+  const raw = input.value.trim();
+  if (!raw) return;
+  input.value = '';
+  benUserSay(raw);
+  setTimeout(() => benSay(benjaminThink(raw)), 400);
+}
+
+function benjaminThink(raw) {
+  if (allWeeks.length === 0) return "I don't have any data to work with yet!";
+  const q = raw.toLowerCase();
+  const current = allWeeks[allWeeks.length - 1];
+  const prev = allWeeks.length > 1 ? allWeeks[allWeeks.length - 2] : null;
+  const currentReps = filterRepData(current);
+  const currentDate = formatDate(current.date);
+  const prevDate = prev ? formatDate(prev.date) : null;
+
+  // Helper: rep entries sorted by a metric
+  const repsSortedBy = (weekReps, metric) =>
+    Object.entries(weekReps).filter(([,d]) => enabledReps.has(d) || true).sort((a,b) => b[1][metric] - a[1][metric]);
+
+  // Check if asking about a specific rep
+  const allRepNames = getAllReps();
+  const mentionedRep = allRepNames.find(name => {
+    const first = name.split(' ')[0].toLowerCase();
+    return q.includes(first) || q.includes(name.toLowerCase());
+  });
+
+  // --- REP-SPECIFIC QUESTION ---
+  if (mentionedRep) {
+    const firstName = mentionedRep.split(' ')[0];
+    const d = currentReps[mentionedRep];
+    if (!d) return `I don't have data for ${firstName} this week (${currentDate}).`;
+
+    if (q.match(/call/)) return `${firstName} made ${formatNum(d.calls)} calls the week of ${currentDate}.`;
+    if (q.match(/connect rate/)) return `${firstName}'s connect rate was ${formatPct(d.connectRate)} the week of ${currentDate}.`;
+    if (q.match(/booking rate|book.*rate/)) return `${firstName}'s booking rate was ${formatPct(d.bookingRate)} the week of ${currentDate}.`;
+    if (q.match(/meeting|book/)) return `${firstName} booked ${d.meetings} meeting${d.meetings !== 1 ? 's' : ''} the week of ${currentDate}.`;
+    if (q.match(/conversation|convo/)) return `${firstName} had ${d.conversations} conversation${d.conversations !== 1 ? 's' : ''} the week of ${currentDate}.`;
+    if (q.match(/connect(?! rate)/)) return `${firstName} got ${d.connects} connects the week of ${currentDate}.`;
+
+    // General "how is X doing"
+    return `Here's ${firstName} for the week of ${currentDate}: ${formatNum(d.calls)} calls, ${d.meetings} meetings, ${formatPct(d.connectRate)} connect rate, ${formatPct(d.bookingRate)} booking rate.`;
+  }
+
+  // --- TOP PERFORMER / LEADER ---
+  if (q.match(/top|lead|best|who.*most meeting|most meeting|who.*winning|winner/)) {
+    const sorted = repsSortedBy(currentReps, 'meetings');
+    if (sorted.length === 0) return "I can't find rep data for this week.";
+    const [name, d] = sorted[0];
+    const first = name.split(' ')[0];
+    return `${first} is leading this week (${currentDate}) with ${d.meetings} meeting${d.meetings !== 1 ? 's' : ''} booked. Nice work, ${first}!`;
+  }
+
+  // --- MOST CALLS ---
+  if (q.match(/most call|who.*call|call.*leader/)) {
+    const sorted = repsSortedBy(currentReps, 'calls');
+    if (sorted.length === 0) return "No call data this week.";
+    const [name, d] = sorted[0];
+    return `${name.split(' ')[0]} made the most calls this week — ${formatNum(d.calls)} calls.`;
+  }
+
+  // --- BEST CONNECT RATE ---
+  if (q.match(/best connect|highest connect|top connect/)) {
+    const sorted = repsSortedBy(currentReps, 'connectRate');
+    const [name, d] = sorted[0];
+    return `${name.split(' ')[0]} has the best connect rate this week at ${formatPct(d.connectRate)}.`;
+  }
+
+  // --- BEST BOOKING RATE ---
+  if (q.match(/best book|highest book|top book/)) {
+    const sorted = repsSortedBy(currentReps, 'bookingRate');
+    const [name, d] = sorted[0];
+    return `${name.split(' ')[0]} has the best booking rate this week at ${formatPct(d.bookingRate)}.`;
+  }
+
+  // --- TEAM CONNECT RATE ---
+  if (q.match(/connect rate/)) {
+    const t = current.total;
+    const comparison = prev ? ` (was ${formatPct(prev.total.connectRate)} last week)` : '';
+    return `The team's connect rate this week is ${formatPct(t.connectRate)}${comparison}.`;
+  }
+
+  // --- TEAM BOOKING RATE ---
+  if (q.match(/booking rate|book.*rate/)) {
+    const t = current.total;
+    const comparison = prev ? ` (was ${formatPct(prev.total.bookingRate)} last week)` : '';
+    return `The team's booking rate this week is ${formatPct(t.bookingRate)}${comparison}.`;
+  }
+
+  // --- MEETINGS THIS WEEK ---
+  if (q.match(/meeting|book/)) {
+    const t = current.total;
+    const comparison = prev ? ` vs ${prev.total.meetings} last week` : '';
+    return `The team booked ${t.meetings} meeting${t.meetings !== 1 ? 's' : ''} the week of ${currentDate}${comparison}.`;
+  }
+
+  // --- CALLS THIS WEEK ---
+  if (q.match(/call/)) {
+    const t = current.total;
+    const comparison = prev ? ` vs ${formatNum(prev.total.calls)} last week` : '';
+    return `The team made ${formatNum(t.calls)} calls the week of ${currentDate}${comparison}.`;
+  }
+
+  // --- COMPARE THIS WEEK VS LAST ---
+  if (q.match(/compare|vs|versus|last week|previous week|week over week/)) {
+    if (!prev) return "I only have one week of data, so nothing to compare yet.";
+    const t = current.total;
+    const p = prev.total;
+    const callDiff = t.calls - p.calls;
+    const meetDiff = t.meetings - p.meetings;
+    return `Week of ${currentDate} vs ${prevDate}: calls ${callDiff >= 0 ? '+' : ''}${callDiff} (${formatNum(t.calls)} vs ${formatNum(p.calls)}), meetings ${meetDiff >= 0 ? '+' : ''}${meetDiff} (${t.meetings} vs ${p.meetings}), connect rate ${formatPct(t.connectRate)} vs ${formatPct(p.connectRate)}.`;
+  }
+
+  // --- THIS WEEK SUMMARY ---
+  if (q.match(/this week|summary|how.*team|team.*doing|overview|recap/)) {
+    const t = current.total;
+    const repCount = Object.keys(currentReps).length;
+    return `Week of ${currentDate}: ${repCount} reps, ${formatNum(t.calls)} calls, ${t.meetings} meetings booked, ${formatPct(t.connectRate)} connect rate, ${formatPct(t.bookingRate)} booking rate.`;
+  }
+
+  // --- ALL TIME / AVERAGES ---
+  if (q.match(/all time|average|overall|historically|history/)) {
+    let totalCalls = 0, totalMeetings = 0, totalConnects = 0;
+    allWeeks.forEach(w => { totalCalls += w.total.calls; totalMeetings += w.total.meetings; totalConnects += w.total.connects; });
+    const weeks = allWeeks.length;
+    return `Over ${weeks} weeks: avg ${Math.round(totalCalls/weeks)} calls/week, avg ${(totalMeetings/weeks).toFixed(1)} meetings/week, overall connect rate ${formatPct(totalConnects/totalCalls*100)}.`;
+  }
+
+  // --- HOW MANY REPS ---
+  if (q.match(/how many rep|how many people|team size/)) {
+    const names = getAllReps().filter(r => !['Matthew De Franco','Christian Mihaylov'].includes(r));
+    return `There are ${names.length} active reps: ${names.map(n => n.split(' ')[0]).join(', ')}.`;
+  }
+
+  // --- HELP ---
+  if (q.match(/help|what can|what do you|who are you/)) {
+    return "I can answer questions like: \"Who's leading this week?\", \"How is Erin doing?\", \"What's our connect rate?\", \"How does this week compare to last?\", \"Who made the most calls?\", or \"What are our all-time averages?\"";
+  }
+
+  return "Hmm, I'm not sure about that one. Try asking about meetings, calls, connect rates, or a specific rep!";
+}
 </script>
 </body>
 </html>
