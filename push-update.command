@@ -8,17 +8,20 @@ echo "------------------------------------"
 echo "  Flint BDR Dashboard — Push Update"
 echo "------------------------------------"
 echo ""
+echo "Repo: $REPO_DIR"
+echo ""
 
-# Check for changes to the CSV
-if git diff --quiet "BDR Stats - All Time.csv" && git ls-files --others --exclude-standard "BDR Stats - All Time.csv" | grep -q .; then
-  echo "No changes detected in the CSV file."
-  echo "Make sure you saved the file before running this."
+git add "BDR Stats - All Time.csv"
+
+if git diff --cached --quiet; then
+  echo "No changes detected in the CSV."
+  echo "Make sure you saved the updated file to:"
+  echo "  $REPO_DIR/BDR Stats - All Time.csv"
   echo ""
   read -p "Press Enter to close..."
   exit 0
 fi
 
-git add "BDR Stats - All Time.csv"
 git commit -m "Update BDR stats — $(date '+%B %d, %Y')"
 git push
 
