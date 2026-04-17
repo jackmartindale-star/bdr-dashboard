@@ -2810,7 +2810,20 @@ function benjaminThink(raw) {
     return "I can answer questions like: \"Who's leading this week?\", \"How is Erin doing?\", \"What's our connect rate?\", \"How does this week compare to last?\", \"Who made the most calls?\", or \"What are our all-time averages?\"";
   }
 
-  return "Hmm, I'm not sure about that one. Try asking about meetings, calls, connect rates, or a specific rep!";
+  // --- OFF-TOPIC DEFLECTION ---
+  const offTopic = q.match(/weather|joke|recipe|sport|football|soccer|movie|music|song|news|politic|cook|travel|holiday|love|dating|relationship|meaning of life|chatgpt|claude|ai|gpt|llm|write.*email|help me with|can you|could you|would you|tell me about(?! the)|what is(?! our|the team| their| his| her)|who is(?! lead|top|best|most)/);
+  if (offTopic) {
+    const deflections = [
+      "Ha! Nice try. I'm not Claude — I'm Benjamin, the UK's most hated sales trainer. I talk numbers, not nonsense. Ask me about the team's stats.",
+      "I appreciate the creativity, but I'm strictly a stats man. Ask me about calls, meetings, or connect rates and I'll be right with you.",
+      "That's above my pay grade — and trust me, my pay grade is already quite low given my reputation. Stick to the sales stats.",
+      "I'm not programmed for that, I'm afraid. I'm Benjamin — here to talk cold calls and booked meetings, nothing else.",
+      "Blimey. I'm the UK's most hated sales trainer, not a general-purpose assistant. What are the team's numbers looking like?",
+    ];
+    return deflections[Math.floor(Math.random() * deflections.length)];
+  }
+
+  return "I'm not quite sure how to answer that one. Try asking about meetings, calls, connect rates, or a specific rep — that's my territory!";
 }
 </script>
 </body>
