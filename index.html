@@ -2691,6 +2691,174 @@ function benjaminThink(raw) {
   const repsSortedBy = (weekReps, metric) =>
     Object.entries(weekReps).filter(([,d]) => enabledReps.has(d) || true).sort((a,b) => b[1][metric] - a[1][metric]);
 
+  // Shared helpers used across blocks
+  const currentYear = current.date.getFullYear();
+  const CURRENT_REPS = getAllReps().filter(r => !['Matthew De Franco','Christian Mihaylov'].includes(r));
+
+  // --- RECORD / BEST WEEK EVER (Q39, Q41) ---
+  if (q.match(/best week|record week|best ever|most ever|ever made|ever booked|highest.*ever|ever.*highest|all.?time (high|best|record)/)) {
+    if (q.match(/call/)) {
+      const best = allWeeks.reduce((b, w) => w.total.calls > b.total.calls ? w : b, allWeeks[0]);
+      return `The record for calls in a single week is ${formatNum(best.total.calls)}, set the week of ${formatDate(best.date)}.`;
+    }
+    const best = allWeeks.reduce((b, w) => w.total.meetings > b.total.meetings ? w : b, allWeeks[0]);
+    return `The record for meetings in a single week is ${best.total.meetings}, set the week of ${formatDate(best.date)}. That's the bar!`;
+  }
+
+  // --- BEST QUARTER EVER (Q37) ---
+  if (q.match(/best quarter|top quarter|highest quarter|strongest quarter/)) {
+    const quarterTotals = {};
+    allWeeks.forEach(w => {
+      const yr = w.date.getFullYear();
+      const qn = Math.floor(w.date.getMonth() / 3) + 1;
+      const key = `Q${qn} ${yr}`;
+      if (!quarterTotals[key]) quarterTotals[key] = 0;
+      quarterTotals[key] += w.total.meetings;
+    });
+    const best = Object.entries(quarterTotals).sort((a,b) => b[1]-a[1])[0];
+    return `The best quarter on record for meetings is ${best[0]} with ${best[1]} total meetings booked.`;
+  }
+
+  // --- ALL-TIME / OVERALL REP LEADERS (Q22, Q43, Q44, Q45, Q47) ---
+  if (q.match(/all.?time|overall|career|historically|most meetings (this year|ever|total)|who.*booked.*most|who.*most.*meeting|top performer (overall|all)/i) ||
+      (q.match(/who|which rep/) && q.match(/most|highest|best/) && !q.match(/this week|last week/))) {
+    // Build per-rep totals across all weeks
+    const repTotals = {};
+    allWeeks.forEach(w => {
+      Object.entries(w.reps).forEach(([name, d]) => {
+        if (!repTotals[name]) repTotals[name] = { calls: 0, meetings: 0, connects: 0, convos: 0, weeks: 0 };
+        repTotals[name].calls += d.calls;
+        repTotals[name].meetings += d.meetings;
+        repTotals[name].connects += d.connects;
+        repTotals[name].convos += d.conversations;
+        repTotals[name].weeks += 1;
+      });
+    });
+
+    if (q.match(/call/)) {
+      const sorted = Object.entries(repTotals).sort((a,b) => b[1].calls - a[1].calls);
+      const [name, d] = sorted[0];
+      return `${name.split(' ')[0]} has made the most calls all time — ${formatNum(d.calls)} across ${d.weeks} weeks.`;
+    }
+    if (q.match(/connect rate/)) {
+      const sorted = Object.entries(repTotals)
+        .map(([n,d]) => [n, d.calls > 0 ? d.connects/d.calls*100 : 0])
+        .sort((a,b) => b[1]-a[1]);
+      const [name, rate] = sorted[0];
+      return `${name.split(' ')[0]} has the best all-time connect rate at ${formatPct(rate)}.`;
+    }
+    // Default: meetings leader
+    const sorted = Object.entries(repTotals).filter(([n]) => CURRENT_REPS.includes(n)).sort((a,b) => b[1].meetings - a[1].meetings);
+    const [name, d] = sorted[0];
+    return `${name.split(' ')[0]} is the all-time meetings leader with ${d.meetings} meetings booked across ${d.weeks} weeks (avg ${(d.meetings/d.weeks).toFixed(1)}/week).`;
+  }
+
+  // --- MOST CONSISTENT PERFORMER (Q46) ---
+  if (q.match(/consistent|reliable|steady|dependable/)) {
+    const repWeeklyMeetings = {};
+    allWeeks.forEach(w => {
+      CURRENT_REPS.forEach(name => {
+        if (!repWeeklyMeetings[name]) repWeeklyMeetings[name] = [];
+        repWeeklyMeetings[name].push(w.reps[name] ? w.reps[name].meetings : 0);
+      });
+    });
+    // Consistency = lowest std deviation relative to mean
+    const scores = Object.entries(repWeeklyMeetings).map(([name, vals]) => {
+      const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+      const variance = vals.reduce((a,b)=>a+(b-mean)**2,0)/vals.length;
+      const cv = mean > 0 ? Math.sqrt(variance)/mean : 999;
+      return [name, cv, mean];
+    }).filter(([,, mean]) => mean > 0).sort((a,b) => a[1]-b[1]);
+    if (scores.length === 0) return "Not enough data to measure consistency yet.";
+    const [name,, mean] = scores[0];
+    return `${name.split(' ')[0]} is the most consistent performer — averaging ${mean.toFixed(1)} meetings/week with the least week-to-week variation.`;
+  }
+
+  // --- YEAR / QUARTER QUERIES ---
+  const yearMatch = q.match(/\b(20\d\d)\b/);
+  const quarterMatch = q.match(/\bq([1-4])\b/);
+
+  // --- YEAR VS YEAR (Q31) ---
+  const allYearMatches = [...raw.matchAll(/\b(20\d\d)\b/g)].map(m => parseInt(m[1]));
+  if (allYearMatches.length >= 2) {
+    const [yr1, yr2] = allYearMatches;
+    const weeks1 = allWeeks.filter(w => w.date.getFullYear() === yr1);
+    const weeks2 = allWeeks.filter(w => w.date.getFullYear() === yr2);
+    const sum = (wks, m) => wks.reduce((s,w) => s+(w.total[m]||0), 0);
+    if (weeks1.length && weeks2.length) {
+      const m1 = sum(weeks1,'meetings'), m2 = sum(weeks2,'meetings');
+      const c1 = sum(weeks1,'calls'), c2 = sum(weeks2,'calls');
+      const cr1 = sum(weeks1,'connects')/c1*100, cr2 = sum(weeks2,'connects')/c2*100;
+      const meetDiff = m2 - m1;
+      return `${yr1}: ${m1} meetings, ${formatNum(c1)} calls, ${formatPct(cr1)} connect rate (${weeks1.length} weeks). ${yr2}: ${m2} meetings, ${formatNum(c2)} calls, ${formatPct(cr2)} connect rate (${weeks2.length} weeks). Meetings ${meetDiff >= 0 ? 'up' : 'down'} ${Math.abs(meetDiff)} year-over-year.`;
+    }
+  }
+
+  // --- QUARTER VS QUARTER (Q35) ---
+  const allQuarterMatches = [...raw.matchAll(/\bq([1-4])\b/gi)].map(m => parseInt(m[1]));
+  if (allQuarterMatches.length >= 2) {
+    const [qn1, qn2] = allQuarterMatches;
+    const allYrs = allYearMatches.length ? allYearMatches : [currentYear];
+    const yr = allYrs[0];
+    const qWeeks = (qn) => allWeeks.filter(w => {
+      const wq = Math.floor(w.date.getMonth()/3)+1;
+      const wy = w.date.getFullYear();
+      return wq === qn && (allYearMatches.length ? wy === yr : true);
+    });
+    const w1 = qWeeks(qn1), w2 = qWeeks(qn2);
+    const sum = (wks, m) => wks.reduce((s,w) => s+(w.total[m]||0), 0);
+    if (w1.length && w2.length) {
+      const label = allYearMatches.length ? ` ${yr}` : '';
+      return `Q${qn1}${label}: ${sum(w1,'meetings')} meetings, ${formatNum(sum(w1,'calls'))} calls (${w1.length} wks). Q${qn2}${label}: ${sum(w2,'meetings')} meetings, ${formatNum(sum(w2,'calls'))} calls (${w2.length} wks).`;
+    }
+  }
+
+  if (yearMatch || quarterMatch) {
+    const year = yearMatch ? parseInt(yearMatch[1]) : null;
+    const quarter = quarterMatch ? parseInt(quarterMatch[1]) : null;
+
+    // Filter weeks by year and/or quarter
+    const periodWeeks = allWeeks.filter(w => {
+      const wy = w.date.getFullYear();
+      const wq = Math.floor(w.date.getMonth() / 3) + 1;
+      if (year && quarter) return wy === year && wq === quarter;
+      if (year) return wy === year;
+      if (quarter) return wq === quarter; // current year implied
+      return true;
+    });
+
+    const periodLabel = year && quarter ? `Q${quarter} ${year}` : year ? String(year) : `Q${quarter}`;
+
+    if (periodWeeks.length === 0) return `I don't have any data for ${periodLabel} yet.`;
+
+    const sumMetric = (metric) => periodWeeks.reduce((s, w) => s + (w.total[metric] || 0), 0);
+    const avgMetric = (metric) => sumMetric(metric) / periodWeeks.length;
+
+    const totalMeetings = sumMetric('meetings');
+    const totalCalls = sumMetric('calls');
+    const totalConnects = sumMetric('connects');
+    const totalConvos = sumMetric('conversations');
+    const avgConnRate = totalCalls > 0 ? totalConnects / totalCalls * 100 : 0;
+    const avgBookRate = totalConvos > 0 ? totalMeetings / totalConvos * 100 : 0;
+
+    // Specific metric questions
+    if (q.match(/meeting|book(?!ing rate)/)) {
+      return `The team booked ${totalMeetings} meetings in ${periodLabel} across ${periodWeeks.length} week${periodWeeks.length !== 1 ? 's' : ''} — avg ${(totalMeetings / periodWeeks.length).toFixed(1)} per week.`;
+    }
+    if (q.match(/call/)) {
+      return `The team made ${formatNum(totalCalls)} calls in ${periodLabel} across ${periodWeeks.length} week${periodWeeks.length !== 1 ? 's' : ''} — avg ${Math.round(totalCalls / periodWeeks.length)} per week.`;
+    }
+    if (q.match(/connect rate/)) {
+      return `The team's avg connect rate in ${periodLabel} was ${formatPct(avgConnRate)} over ${periodWeeks.length} week${periodWeeks.length !== 1 ? 's' : ''}.`;
+    }
+    if (q.match(/booking rate|book.*rate/)) {
+      return `The team's avg booking rate in ${periodLabel} was ${formatPct(avgBookRate)} over ${periodWeeks.length} week${periodWeeks.length !== 1 ? 's' : ''}.`;
+    }
+
+    // Generic summary
+    return `${periodLabel} summary (${periodWeeks.length} weeks): ${formatNum(totalCalls)} total calls, ${totalMeetings} meetings booked, ${formatPct(avgConnRate)} avg connect rate, ${formatPct(avgBookRate)} avg booking rate.`;
+  }
+
   // Check if asking about a specific rep
   const allRepNames = getAllReps();
   const mentionedRep = allRepNames.find(name => {
@@ -2713,6 +2881,28 @@ function benjaminThink(raw) {
 
     // General "how is X doing"
     return `Here's ${firstName} for the week of ${currentDate}: ${formatNum(d.calls)} calls, ${d.meetings} meetings, ${formatPct(d.connectRate)} connect rate, ${formatPct(d.bookingRate)} booking rate.`;
+  }
+
+  // --- TEAM CONVERSATIONS THIS WEEK (Q10) ---
+  if (q.match(/conversation|convo/) && !mentionedRep) {
+    const t = current.total;
+    const comparison = prev ? ` vs ${prev.total.conversations} last week` : '';
+    return `The team had ${t.conversations} conversations the week of ${currentDate}${comparison}.`;
+  }
+
+  // --- WHO'S HAVING THEIR BEST WEEK (Q21) ---
+  if (q.match(/best week|best performance|standing out|on fire|killing it/)) {
+    if (!prev) return "I need at least two weeks of data to spot who's having a standout week.";
+    const scores = Object.entries(currentReps).map(([name, d]) => {
+      const prevD = prev.reps[name];
+      const improvement = prevD ? d.meetings - prevD.meetings : d.meetings;
+      return [name, improvement, d.meetings];
+    }).sort((a,b) => b[1]-a[1]);
+    const [name, improvement, meetings] = scores[0];
+    const first = name.split(' ')[0];
+    return improvement > 0
+      ? `${first} is having a standout week — ${meetings} meetings booked, up ${improvement} from last week.`
+      : `${first} leads with ${meetings} meetings this week, though no one is significantly up on last week.`;
   }
 
   // --- TOP PERFORMER / LEADER ---
@@ -2814,6 +3004,14 @@ function benjaminThink(raw) {
     return `The team made ${formatNum(t.calls)} calls the week of ${currentDate}${comparison}.`;
   }
 
+  // --- CONNECT RATE IMPROVEMENT VS LAST WEEK (Q13) ---
+  if (q.match(/connect rate.*(improve|better|worse|up|down|change|last week|from last)/)) {
+    if (!prev) return "I need two weeks of data to compare.";
+    const diff = current.total.connectRate - prev.total.connectRate;
+    const dir = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
+    return `Connect rate is ${dir} ${formatPct(Math.abs(diff))} from last week — ${formatPct(current.total.connectRate)} this week vs ${formatPct(prev.total.connectRate)} last week.`;
+  }
+
   // --- COMPARE THIS WEEK VS LAST ---
   if (q.match(/compare|vs|versus|last week|previous week|week over week/)) {
     if (!prev) return "I only have one week of data, so nothing to compare yet.";
@@ -2833,10 +3031,43 @@ function benjaminThink(raw) {
 
   // --- ALL TIME / AVERAGES ---
   if (q.match(/all time|average|overall|historically|history/)) {
-    let totalCalls = 0, totalMeetings = 0, totalConnects = 0;
-    allWeeks.forEach(w => { totalCalls += w.total.calls; totalMeetings += w.total.meetings; totalConnects += w.total.connects; });
+    let totalCalls = 0, totalMeetings = 0, totalConnects = 0, totalConvos = 0;
+    allWeeks.forEach(w => { totalCalls += w.total.calls; totalMeetings += w.total.meetings; totalConnects += w.total.connects; totalConvos += w.total.conversations; });
     const weeks = allWeeks.length;
-    return `Over ${weeks} weeks: avg ${Math.round(totalCalls/weeks)} calls/week, avg ${(totalMeetings/weeks).toFixed(1)} meetings/week, overall connect rate ${formatPct(totalConnects/totalCalls*100)}.`;
+    const avgBookRate = totalConvos > 0 ? totalMeetings/totalConvos*100 : 0;
+    return `Over ${weeks} weeks all time: avg ${Math.round(totalCalls/weeks)} calls/week, avg ${(totalMeetings/weeks).toFixed(1)} meetings/week, ${formatPct(totalConnects/totalCalls*100)} connect rate, ${formatPct(avgBookRate)} booking rate.`;
+  }
+
+  // --- CONVERSATIONAL / INTERPRETIVE (Q48, Q49, Q50) ---
+  if (q.match(/good week|bad week|going well|not great|how.*going/)) {
+    const t = current.total;
+    const weeksData = allWeeks.slice(-8, -1);
+    const avgMeet = weeksData.length ? weeksData.reduce((s,w)=>s+w.total.meetings,0)/weeksData.length : 0;
+    const verdict = t.meetings >= avgMeet * 1.1 ? "yes, it's a good one" : t.meetings >= avgMeet * 0.9 ? "it's about average" : "it's a bit below par";
+    return `${t.meetings} meetings this week vs a recent avg of ${avgMeet.toFixed(1)} — I'd say ${verdict}. Connect rate is ${formatPct(t.connectRate)}.`;
+  }
+
+  if (q.match(/worried|concern|alarm|problem|issue|red flag/)) {
+    const t = current.total;
+    const weeksData = allWeeks.slice(-5, -1);
+    const avgMeet = weeksData.length ? weeksData.reduce((s,w)=>s+w.total.meetings,0)/weeksData.length : t.meetings;
+    const flags = [];
+    if (t.meetings < avgMeet * 0.7) flags.push(`meetings are down significantly (${t.meetings} vs avg ${avgMeet.toFixed(1)})`);
+    if (t.connectRate < 5) flags.push(`connect rate is low at ${formatPct(t.connectRate)}`);
+    if (t.calls < 500) flags.push(`call volume is low at ${formatNum(t.calls)}`);
+    return flags.length
+      ? `Worth keeping an eye on: ${flags.join('; ')}.`
+      : `Nothing alarming this week — numbers look within normal range. ${t.meetings} meetings booked, ${formatPct(t.connectRate)} connect rate.`;
+  }
+
+  if (q.match(/focus|important|priority|should we|what.*do|recommend/)) {
+    const t = current.total;
+    const weeksData = allWeeks.slice(-6, -1);
+    const avgConnRate = weeksData.length ? weeksData.reduce((s,w)=>s+w.total.connectRate,0)/weeksData.length : t.connectRate;
+    const avgBookRate = weeksData.length ? weeksData.reduce((s,w)=>s+w.total.bookingRate,0)/weeksData.length : t.bookingRate;
+    if (t.connectRate < avgConnRate * 0.9) return `Connect rate (${formatPct(t.connectRate)}) is below the recent avg (${formatPct(avgConnRate)}) — worth focusing on opening quality and call targeting.`;
+    if (t.bookingRate < avgBookRate * 0.9) return `Booking rate (${formatPct(t.bookingRate)}) is below recent avg (${formatPct(avgBookRate)}) — conversations are happening but not converting. Might be worth reviewing pitch and objection handling.`;
+    return `Numbers look solid this week. If I had to pick one thing — call volume drives everything else, so keep that up.`;
   }
 
   // --- HOW MANY REPS ---
