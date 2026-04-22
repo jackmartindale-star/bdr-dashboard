@@ -1205,6 +1205,11 @@ tr.week-header-row:hover td { background: var(--blue); }
 
 <script>
 // ============================================================
+// ============================================================
+// DATA SOURCE
+// ============================================================
+const DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQjcenE2FUWFgUbV0KTN_e8qoPQqb18kQGlQy4xhYNjPQnRegEU7CVIgw1fDo9-SyI2LSKjqj1Bd2TI/pub?gid=0&single=true&output=csv';
+
 // GLOBALS
 // ============================================================
 let allWeeks = [];
@@ -2586,18 +2591,17 @@ document.getElementById('modal-overlay').addEventListener('click', e => {
 // ============================================================
 async function init() {
   try {
-    const csvResp = await fetch('BDR Stats - All Time.csv');
+    const csvResp = await fetch(DATA_URL);
     const csvText = await csvResp.text();
     allWeeks = parseCSV(csvText);
   } catch (e) {
-    console.error('Failed to load CSV:', e);
-    // Try loading from embedded data or show error
+    console.error('Failed to load data:', e);
     document.querySelector('.main').innerHTML = `
       <div style="padding:60px;text-align:center">
         <h2 style="color:var(--blue)">Could not load data</h2>
         <p style="margin-top:12px;color:var(--text-light)">
-          Make sure "BDR Stats - All Time.csv" is in the same folder as this file.<br>
-          If opening locally, use a local server: <code>python3 -m http.server</code>
+          The dashboard couldn't reach the Google Sheet. Check your internet connection,<br>
+          or make sure the sheet is still published to the web.
         </p>
       </div>`;
     return;
@@ -2619,7 +2623,7 @@ async function init() {
   if (allWeeks.length > 0) {
     const lastWeek = allWeeks[allWeeks.length - 1];
     const el = document.getElementById('last-updated');
-    if (el) el.textContent = 'Data through ' + formatDate(lastWeek.date);
+    if (el) el.textContent = 'Live from Google Sheets · through ' + formatDate(lastWeek.date);
   }
 
   renderThisWeek();
