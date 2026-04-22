@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BDR Performance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5"></script>
@@ -17,7 +20,7 @@
   --text: #616977;
   --text-light: #90A1B9;
   --border: #E2E8F0;
-  --bg: #f5f7fa;
+  --bg: #f0f4f8;
   --white: #FFFFFF;
   --green: #22c55e;
   --red: #ef4444;
@@ -26,7 +29,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
   display: flex;
@@ -47,11 +50,13 @@ body {
   bottom: 0;
   z-index: 100;
   overflow-y: auto;
+  box-shadow: 2px 0 16px rgba(0,0,0,0.12);
 }
 
 .sidebar-header {
   padding: 24px 20px;
-  border-bottom: 1px solid var(--blue-light);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(135deg, #316195, #264a73);
 }
 
 .sidebar-header h1 {
@@ -209,7 +214,7 @@ body {
   font-size: 12px;
   font-weight: 500;
   border: 1px solid var(--border);
-  background: var(--white);
+  background: #f0f4f8;
   color: var(--text);
   cursor: pointer;
   transition: all 0.15s;
@@ -267,6 +272,8 @@ body {
   border-radius: 12px;
   padding: 20px;
   border: 1px solid var(--border);
+  border-top: 3px solid var(--blue);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
 }
 
 .kpi-card .label {
@@ -278,7 +285,7 @@ body {
 }
 
 .kpi-card .value {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
   color: var(--blue);
 }
@@ -306,6 +313,7 @@ body {
   border-radius: 12px;
   padding: 20px;
   border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
 }
 
 .chart-card.full-width {
@@ -330,6 +338,7 @@ body {
   border-radius: 12px;
   padding: 20px;
   border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   margin-bottom: 24px;
   overflow-x: auto;
 }
@@ -370,7 +379,7 @@ td {
 }
 
 tr:hover td { background: #f8fafc; }
-tr.total-row td { font-weight: 700; background: #f0f4f8; }
+tr.total-row td { font-weight: 700; background: #eef3f8; }
 tr.week-spacer td { height: 12px; padding: 0; border-bottom: 2px solid var(--blue); background: transparent; }
 tr.week-spacer:hover td { background: transparent; }
 
@@ -387,6 +396,7 @@ tr.week-spacer:hover td { background: transparent; }
   border-radius: 12px;
   padding: 20px;
   border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
 }
 
 .leaderboard-card h3 {
@@ -661,15 +671,16 @@ tr.week-spacer:hover td { background: transparent; }
 
 /* Week header row in history table */
 tr.week-header-row td {
-  background: var(--blue);
-  color: #fff;
+  background: #eef3f8;
+  color: var(--blue);
   font-weight: 700;
   font-size: 12px;
   padding: 6px 12px;
   letter-spacing: 0.3px;
   border: none;
+  border-left: 3px solid var(--blue);
 }
-tr.week-header-row:hover td { background: var(--blue); }
+tr.week-header-row:hover td { background: #e5edf6; }
 
 /* Export button */
 .export-btn {
@@ -694,13 +705,16 @@ tr.week-header-row:hover td { background: var(--blue); }
 
 /* Page header */
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
 }
 
 .page-header h2 {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--blue);
+  letter-spacing: -0.3px;
 }
 
 .page-header p {
