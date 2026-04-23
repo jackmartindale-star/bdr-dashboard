@@ -1036,6 +1036,14 @@ tr.week-header-row:hover td { background: #e5edf6; }
         <h3>Connect Rate Trend</h3>
         <canvas id="connect-rate-chart"></canvas>
       </div>
+      <div class="chart-card">
+        <h3>Conversation Rate Over Time</h3>
+        <canvas id="conv-rate-trend-chart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Booking Rate Over Time</h3>
+        <canvas id="booking-rate-trend-chart"></canvas>
+      </div>
     </div>
   </section>
 
@@ -1673,6 +1681,8 @@ function renderTrends() {
   renderMeetingsTrend(weeks);
   renderCallsTrend(weeks);
   renderConnectRateTrend(weeks);
+  renderConvRateTrend(weeks);
+  renderBookingRateTrend(weeks);
 }
 
 function renderMeetingsTrend(weeks) {
@@ -1775,6 +1785,108 @@ function renderConnectRateTrend(weeks) {
 
   const ctx = document.getElementById('connect-rate-chart').getContext('2d');
   chartInstances['connect-rate-chart'] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top', labels: { font: { size: 11 }, usePointStyle: true } } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#E2E8F0' }, ticks: { callback: v => v + '%' } },
+        x: { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 10 } } }
+      },
+      interaction: { mode: 'index', intersect: false }
+    }
+  });
+}
+
+function renderConvRateTrend(weeks) {
+  destroyChart('conv-rate-trend-chart');
+  const labels = weeks.map(w => formatDate(w.date));
+  const reps = getActiveReps(weeks).filter(r => enabledReps.has(r));
+
+  const datasets = reps.map(name => ({
+    label: name,
+    data: weeks.map(w => w.reps[name] ? parseFloat(w.reps[name].conversationRate.toFixed(1)) : null),
+    borderColor: getRepColor(name),
+    tension: 0.3,
+    pointRadius: 3,
+    borderWidth: 2,
+    fill: false,
+    spanGaps: true
+  }));
+
+  // Team average line
+  datasets.push({
+    label: 'Team Avg',
+    data: weeks.map(w => {
+      const active = Object.entries(w.reps).filter(([n]) => enabledReps.has(n));
+      if (active.length === 0) return null;
+      const totalConvos = active.reduce((s, [, d]) => s + d.conversations, 0);
+      const totalConnects = active.reduce((s, [, d]) => s + d.connects, 0);
+      return totalConnects > 0 ? parseFloat((totalConvos / totalConnects * 100).toFixed(1)) : null;
+    }),
+    borderColor: '#1e293b',
+    borderWidth: 3,
+    borderDash: [6, 3],
+    tension: 0.3,
+    pointRadius: 4,
+    fill: false,
+    spanGaps: true
+  });
+
+  const ctx = document.getElementById('conv-rate-trend-chart').getContext('2d');
+  chartInstances['conv-rate-trend-chart'] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top', labels: { font: { size: 11 }, usePointStyle: true } } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#E2E8F0' }, ticks: { callback: v => v + '%' } },
+        x: { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 10 } } }
+      },
+      interaction: { mode: 'index', intersect: false }
+    }
+  });
+}
+
+function renderBookingRateTrend(weeks) {
+  destroyChart('booking-rate-trend-chart');
+  const labels = weeks.map(w => formatDate(w.date));
+  const reps = getActiveReps(weeks).filter(r => enabledReps.has(r));
+
+  const datasets = reps.map(name => ({
+    label: name,
+    data: weeks.map(w => w.reps[name] ? parseFloat(w.reps[name].bookingRate.toFixed(1)) : null),
+    borderColor: getRepColor(name),
+    tension: 0.3,
+    pointRadius: 3,
+    borderWidth: 2,
+    fill: false,
+    spanGaps: true
+  }));
+
+  // Team average line
+  datasets.push({
+    label: 'Team Avg',
+    data: weeks.map(w => {
+      const active = Object.entries(w.reps).filter(([n]) => enabledReps.has(n));
+      if (active.length === 0) return null;
+      const totalMeetings = active.reduce((s, [, d]) => s + d.meetings, 0);
+      const totalConvos = active.reduce((s, [, d]) => s + d.conversations, 0);
+      return totalConvos > 0 ? parseFloat((totalMeetings / totalConvos * 100).toFixed(1)) : null;
+    }),
+    borderColor: '#1e293b',
+    borderWidth: 3,
+    borderDash: [6, 3],
+    tension: 0.3,
+    pointRadius: 4,
+    fill: false,
+    spanGaps: true
+  });
+
+  const ctx = document.getElementById('booking-rate-trend-chart').getContext('2d');
+  chartInstances['booking-rate-trend-chart'] = new Chart(ctx, {
     type: 'line',
     data: { labels, datasets },
     options: {
