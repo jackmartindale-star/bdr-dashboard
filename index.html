@@ -51,13 +51,69 @@ body {
   z-index: 100;
   overflow-y: auto;
   box-shadow: 2px 0 16px rgba(0,0,0,0.12);
+  transition: transform 0.25s ease;
 }
 
+body.sidebar-collapsed .sidebar {
+  transform: translateX(-240px);
+}
+
+body.sidebar-collapsed .main {
+  margin-left: 0;
+  transition: margin-left 0.25s ease;
+}
+
+.main {
+  transition: margin-left 0.25s ease;
+}
+
+/* Floating restore tab when sidebar is hidden */
+.sidebar-restore {
+  position: fixed;
+  top: 20px;
+  left: 0;
+  z-index: 101;
+  background: var(--blue);
+  color: var(--white);
+  border: none;
+  border-radius: 0 8px 8px 0;
+  padding: 10px 10px 10px 8px;
+  cursor: pointer;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.18);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.sidebar-restore:hover { background: var(--blue-dark); }
+
+body.sidebar-collapsed .sidebar-restore {
+  display: flex;
+}
+
+/* Collapse button inside sidebar header */
 .sidebar-header {
   padding: 24px 20px;
   border-bottom: 1px solid rgba(255,255,255,0.12);
   background: linear-gradient(135deg, #316195, #264a73);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
 }
+
+.sidebar-collapse-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  padding: 2px 0 0 8px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.sidebar-collapse-btn:hover { color: #fff; }
 
 .sidebar-header h1 {
   font-size: 18px;
@@ -299,6 +355,41 @@ body {
 .delta.up { color: var(--green); }
 .delta.down { color: var(--red); }
 .delta.neutral { color: var(--text-light); }
+
+/* Flip KPI card — hover to see per-rep average */
+.kpi-card.flippable {
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+.kpi-face-default {
+  transition: opacity 0.18s ease;
+}
+.kpi-face-default .hover-hint {
+  font-size: 10px;
+  color: var(--text-light);
+  margin-top: 8px;
+  font-style: italic;
+  opacity: 0.75;
+}
+.kpi-face-hover {
+  position: absolute;
+  inset: 0;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  background: var(--white);
+  border-radius: 12px;
+}
+.kpi-face-hover .avg-hint {
+  font-size: 10px;
+  color: var(--text-light);
+  margin-top: 8px;
+  font-style: italic;
+}
+.kpi-card.flippable:hover .kpi-face-default { opacity: 0; }
+.kpi-card.flippable:hover .kpi-face-hover { opacity: 1; }
 
 /* Charts */
 .chart-grid {
@@ -901,11 +992,21 @@ tr.week-header-row:hover td { background: #e5edf6; }
 </head>
 <body>
 
+<!-- Sidebar restore tab (visible when collapsed) -->
+<button class="sidebar-restore" onclick="toggleSidebar()" title="Show sidebar">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+</button>
+
 <!-- Sidebar -->
 <aside class="sidebar">
   <div class="sidebar-header">
-    <h1>Flint BDR</h1>
-    <p>Performance Dashboard</p>
+    <div>
+      <h1>Flint BDR</h1>
+      <p>Performance Dashboard</p>
+    </div>
+    <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Hide sidebar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
   </div>
 
   <nav class="sidebar-nav">
@@ -1527,10 +1628,22 @@ function renderThisWeek() {
   const t = current.total;
   const p = prev ? prev.total : null;
 
+  // Per-rep averages for the flip cards
+  const currReps = filterRepData(current);
+  const prevReps = prev ? filterRepData(prev) : null;
+  const currRepCount = Math.max(Object.keys(currReps).length, 1);
+  const prevRepCount = prevReps ? Math.max(Object.keys(prevReps).length, 1) : 0;
+  const avgConnects = t.connects / currRepCount;
+  const avgConvos = t.conversations / currRepCount;
+  const prevAvgConnects = prevReps ? p.connects / prevRepCount : null;
+  const prevAvgConvos = prevReps ? p.conversations / prevRepCount : null;
+
   kpis.innerHTML = buildKPICard('Total Calls', formatNum(t.calls), p ? t.calls - p.calls : null, false)
-    + buildKPICard('Connects', formatNum(t.connects), p ? t.connects - p.connects : null, false)
+    + buildFlipKPICard('Connects', formatNum(t.connects), p ? t.connects - p.connects : null,
+        'Avg Connects / Rep', avgConnects.toFixed(1), prevAvgConnects !== null ? avgConnects - prevAvgConnects : null)
     + buildKPICard('Connect Rate', formatPct(t.connectRate), p ? t.connectRate - p.connectRate : null, true)
-    + buildKPICard('Conversations', formatNum(t.conversations), p ? t.conversations - p.conversations : null, false)
+    + buildFlipKPICard('Conversations', formatNum(t.conversations), p ? t.conversations - p.conversations : null,
+        'Avg Convos / Rep', avgConvos.toFixed(1), prevAvgConvos !== null ? avgConvos - prevAvgConvos : null)
     + buildKPICard('Meetings Booked', formatNum(t.meetings), p ? t.meetings - p.meetings : null, false)
     + buildKPICard('Booking Rate', formatPct(t.bookingRate), p ? t.bookingRate - p.bookingRate : null, true)
     + buildKPICard('Bookings/Call', formatPct(t.bookingsPerCall), p ? t.bookingsPerCall - p.bookingsPerCall : null, true);
@@ -1636,6 +1749,32 @@ function buildKPICard(label, value, delta, isPct) {
     deltaHtml = `<div class="delta ${cls}">${arrow} ${formatted} vs prev week</div>`;
   }
   return `<div class="kpi-card"><div class="label">${label}</div><div class="value">${value}</div>${deltaHtml}</div>`;
+}
+
+function buildFlipKPICard(totalLabel, totalValue, totalDelta, avgLabel, avgValue, avgDelta) {
+  function makeDelta(delta, dec) {
+    if (delta === null || delta === undefined) return '';
+    const cls = delta > 0 ? 'up' : delta < 0 ? 'down' : 'neutral';
+    const arrow = delta > 0 ? '&#9650;' : delta < 0 ? '&#9660;' : '&#8212;';
+    const abs = Math.abs(delta);
+    const formatted = (delta > 0 ? '+' : delta < 0 ? '-' : '') + (dec ? abs.toFixed(1) : Math.round(abs));
+    return `<div class="delta ${cls}">${arrow} ${formatted} vs prev week</div>`;
+  }
+  return `
+    <div class="kpi-card flippable">
+      <div class="kpi-face kpi-face-default">
+        <div class="label">${totalLabel}</div>
+        <div class="value">${totalValue}</div>
+        ${makeDelta(totalDelta, false)}
+        <div class="hover-hint">hover · avg per rep</div>
+      </div>
+      <div class="kpi-face kpi-face-hover">
+        <div class="label">${avgLabel}</div>
+        <div class="value">${avgValue}</div>
+        ${makeDelta(avgDelta, true)}
+        <div class="avg-hint">avg per active rep</div>
+      </div>
+    </div>`;
 }
 
 // ============================================================
@@ -2652,6 +2791,13 @@ function addEvent() {
   closeModal();
   refreshAll();
   alert('Event added! It will appear on trend charts. Note: To persist events, update events.json in the repo.');
+}
+
+// ============================================================
+// SIDEBAR TOGGLE
+// ============================================================
+function toggleSidebar() {
+  document.body.classList.toggle('sidebar-collapsed');
 }
 
 // ============================================================
