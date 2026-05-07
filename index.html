@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5"></script>
 <style>
 :root {
-  --blue: #316195;
+  --blue: #3a76b0;
   --blue-dark: #264a73;
   --blue-light: #3d7ab8;
   --yellow: #f99c24;
@@ -96,7 +96,7 @@ body.sidebar-collapsed .sidebar-restore {
 .sidebar-header {
   padding: 24px 20px;
   border-bottom: 1px solid rgba(255,255,255,0.12);
-  background: linear-gradient(135deg, #316195, #264a73);
+  background: linear-gradient(135deg, #3a76b0, #2d5a8a);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -364,13 +364,6 @@ body.sidebar-collapsed .sidebar-restore {
 }
 .kpi-face-default {
   transition: opacity 0.18s ease;
-}
-.kpi-face-default .hover-hint {
-  font-size: 10px;
-  color: var(--text-light);
-  margin-top: 8px;
-  font-style: italic;
-  opacity: 0.75;
 }
 .kpi-face-hover {
   position: absolute;
@@ -1766,7 +1759,6 @@ function buildFlipKPICard(totalLabel, totalValue, totalDelta, avgLabel, avgValue
         <div class="label">${totalLabel}</div>
         <div class="value">${totalValue}</div>
         ${makeDelta(totalDelta, false)}
-        <div class="hover-hint">hover · avg per rep</div>
       </div>
       <div class="kpi-face kpi-face-hover">
         <div class="label">${avgLabel}</div>
