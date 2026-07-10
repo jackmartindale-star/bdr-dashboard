@@ -787,6 +787,101 @@ tr.week-header-row:hover td { background: #e5edf6; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
+/* This Week — side-by-side table + donut */
+.week-with-donut {
+  display: grid;
+  grid-template-columns: 1fr 210px;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+
+.week-with-donut .data-table-wrapper {
+  margin-bottom: 0;
+}
+
+.donut-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.donut-card-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+  margin-bottom: 10px;
+  align-self: flex-start;
+  font-weight: 600;
+}
+
+.donut-legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 11px;
+  width: 100%;
+  color: var(--text);
+}
+
+/* Clickable total row */
+tr.total-row.clickable { cursor: pointer; }
+tr.total-row.clickable:hover td { background: #dce8f2; }
+tr.total-row.clickable td:first-child::after {
+  content: ' ↗';
+  font-size: 10px;
+  color: var(--blue);
+  opacity: 0.6;
+}
+
+/* KPI popup */
+.kpi-popup-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+}
+.kpi-popup-overlay.visible { display: flex; }
+.kpi-popup {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 760px;
+  width: 95%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.kpi-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.kpi-popup-header span {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--blue);
+}
+.kpi-popup-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--text-light);
+  line-height: 1;
+  padding: 0 2px;
+}
+.kpi-popup-close:hover { color: var(--text); }
+
 /* Page header */
 .page-header {
   margin-bottom: 24px;
@@ -1046,28 +1141,52 @@ tr.week-header-row:hover td { background: #e5edf6; }
       <h2 id="thisweek-title">This Week</h2>
       <p id="thisweek-subtitle"></p>
     </div>
-    <div class="kpi-grid" id="thisweek-kpis"></div>
-    <div class="data-table-wrapper">
-      <h3>Rep Breakdown</h3>
-      <table id="thisweek-table">
-        <thead><tr>
-          <th>Rep</th><th>Calls</th><th>Connects</th><th>Connect %</th>
-          <th>Conversations</th><th>Conv %</th><th>Meetings</th><th>Booking %</th><th>Bookings/Call</th>
-        </tr></thead>
-        <tbody></tbody>
-      </table>
+    <div class="week-with-donut">
+      <div class="data-table-wrapper">
+        <h3>Rep Breakdown <span style="font-size:11px;font-weight:400;color:var(--text-light);margin-left:8px">Click total row for full summary</span></h3>
+        <table id="thisweek-table">
+          <thead><tr>
+            <th>Rep</th><th>Calls</th><th>Connects</th><th>Connect %</th>
+            <th>Conversations</th><th>Conv %</th><th>Meetings</th><th>Booking %</th><th>Bookings/Call</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="donut-card">
+        <div class="donut-card-title">Meetings by rep</div>
+        <canvas id="thisweek-donut" width="178" height="178"></canvas>
+        <div id="thisweek-donut-legend" style="width:100%;margin-top:10px"></div>
+      </div>
     </div>
-    <div class="data-table-wrapper" id="prevweek-wrapper" style="display:none">
-      <h3 id="prevweek-title">Previous Week</h3>
-      <table id="prevweek-table">
-        <thead><tr>
-          <th>Rep</th><th>Calls</th><th>Connects</th><th>Connect %</th>
-          <th>Conversations</th><th>Conv %</th><th>Meetings</th><th>Booking %</th><th>Bookings/Call</th>
-        </tr></thead>
-        <tbody></tbody>
-      </table>
+    <div class="week-with-donut" id="prevweek-wrapper" style="display:none">
+      <div class="data-table-wrapper">
+        <h3 id="prevweek-title">Previous Week</h3>
+        <table id="prevweek-table">
+          <thead><tr>
+            <th>Rep</th><th>Calls</th><th>Connects</th><th>Connect %</th>
+            <th>Conversations</th><th>Conv %</th><th>Meetings</th><th>Booking %</th><th>Bookings/Call</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="donut-card">
+        <div class="donut-card-title">Meetings by rep</div>
+        <canvas id="prevweek-donut" width="178" height="178"></canvas>
+        <div id="prevweek-donut-legend" style="width:100%;margin-top:10px"></div>
+      </div>
     </div>
   </section>
+
+  <!-- KPI POPUP -->
+  <div class="kpi-popup-overlay" id="kpi-popup-overlay" onclick="closeKPIPopup()">
+    <div class="kpi-popup" onclick="event.stopPropagation()">
+      <div class="kpi-popup-header">
+        <span id="kpi-popup-title"></span>
+        <button class="kpi-popup-close" onclick="closeKPIPopup()">&#x2715;</button>
+      </div>
+      <div class="kpi-grid" id="kpi-popup-grid"></div>
+    </div>
+  </div>
 
   <!-- HISTORY VIEW -->
   <section class="view-section" id="view-history">
@@ -1500,22 +1619,28 @@ function getFilteredWeeks() {
     return allWeeks.filter(w => w.date >= customStart && w.date <= customEnd);
   }
 
-  const now = new Date();
-  const filters = {
-    '2024': { start: new Date('2024-01-01'), end: new Date('2024-12-31') },
-    '2025': { start: new Date('2025-01-01'), end: new Date('2025-12-31') },
-    '2026': { start: new Date('2026-01-01'), end: new Date('2026-12-31') },
-    'q1-2025': { start: new Date('2025-01-01'), end: new Date('2025-03-31') },
-    'q2-2025': { start: new Date('2025-04-01'), end: new Date('2025-06-30') },
-    'q3-2025': { start: new Date('2025-07-01'), end: new Date('2025-09-30') },
-    'q4-2025': { start: new Date('2025-10-01'), end: new Date('2025-12-31') },
-    'q1-2026': { start: new Date('2026-01-01'), end: new Date('2026-03-31') },
-    'q2-2026': { start: new Date('2026-04-01'), end: new Date('2026-06-30') },
-  };
+  // Full year filter e.g. "2025", "2026"
+  const yearOnly = activeFilter.match(/^(\d{4})$/);
+  if (yearOnly) {
+    const y = parseInt(yearOnly[1]);
+    const start = new Date(y, 0, 1);
+    const end = new Date(y, 11, 31);
+    return allWeeks.filter(w => w.date >= start && w.date <= end);
+  }
 
-  const f = filters[activeFilter];
-  if (!f) return allWeeks;
-  return allWeeks.filter(w => w.date >= f.start && w.date <= f.end);
+  // Quarter filter e.g. "q2-2026"
+  const quarterMatch = activeFilter.match(/^q([1-4])-(\d{4})$/);
+  if (quarterMatch) {
+    const q = parseInt(quarterMatch[1]);
+    const y = parseInt(quarterMatch[2]);
+    const qStart = [0, 3, 6, 9][q - 1];
+    const qEnd = [2, 5, 8, 11][q - 1];
+    const start = new Date(y, qStart, 1);
+    const end = new Date(y, qEnd + 1, 0); // last day of end month
+    return allWeeks.filter(w => w.date >= start && w.date <= end);
+  }
+
+  return allWeeks;
 }
 
 function getActiveReps(weeks) {
@@ -1617,22 +1742,146 @@ function renderThisWeek() {
     ? 'Compared to week of ' + formatDate(prev.date)
     : 'No previous week for comparison';
 
-  // KPI Cards
-  const kpis = document.getElementById('thisweek-kpis');
   const t = current.total;
   const p = prev ? prev.total : null;
 
-  // Per-rep averages for the flip cards
+  // Current week table
+  const tbody = document.querySelector('#thisweek-table tbody');
+  tbody.innerHTML = '';
   const currReps = filterRepData(current);
-  const prevReps = prev ? filterRepData(prev) : null;
-  const currRepCount = Math.max(Object.keys(currReps).length, 1);
+  Object.entries(currReps).sort((a,b) => b[1].meetings - a[1].meetings).forEach(([name, d]) => {
+    tbody.innerHTML += `<tr>
+      <td><span class="color-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${getRepColor(name)};margin-right:8px"></span>${name}</td>
+      <td>${formatNum(d.calls)}</td><td>${formatNum(d.connects)}</td><td>${formatPct(d.connectRate)}</td>
+      <td>${formatNum(d.conversations)}</td><td>${formatPct(d.conversationRate)}</td>
+      <td>${formatNum(d.meetings)}</td><td>${formatPct(d.bookingRate)}</td><td>${formatPct(d.bookingsPerCall)}</td>
+    </tr>`;
+  });
+  const ft = calcTotal(currReps);
+  tbody.innerHTML += `<tr class="total-row clickable">
+    <td>Total</td>
+    <td>${formatNum(ft.calls)}</td><td>${formatNum(ft.connects)}</td><td>${formatPct(ft.connectRate)}</td>
+    <td>${formatNum(ft.conversations)}</td><td>${formatPct(ft.conversationRate)}</td>
+    <td>${formatNum(ft.meetings)}</td><td>${formatPct(ft.bookingRate)}</td><td>${formatPct(ft.bookingsPerCall)}</td>
+  </tr>`;
+  tbody.querySelector('tr.total-row').addEventListener('click', () => {
+    showKPIPopup(t, p, 'Week of ' + formatDate(current.date), currReps, prev ? filterRepData(prev) : null);
+  });
+
+  renderWeekDonut('thisweek-donut', 'thisweek-donut-legend', currReps);
+
+  // Previous week table
+  const prevWrapper = document.getElementById('prevweek-wrapper');
+  if (prev) {
+    prevWrapper.style.display = '';
+    document.getElementById('prevweek-title').textContent = 'Previous Week — ' + formatDate(prev.date);
+    const prevTbody = document.querySelector('#prevweek-table tbody');
+    prevTbody.innerHTML = '';
+    const prevRepsData = filterRepData(prev);
+    Object.entries(prevRepsData).sort((a,b) => b[1].meetings - a[1].meetings).forEach(([name, d]) => {
+      prevTbody.innerHTML += `<tr>
+        <td><span class="color-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${getRepColor(name)};margin-right:8px"></span>${name}</td>
+        <td>${formatNum(d.calls)}</td><td>${formatNum(d.connects)}</td><td>${formatPct(d.connectRate)}</td>
+        <td>${formatNum(d.conversations)}</td><td>${formatPct(d.conversationRate)}</td>
+        <td>${formatNum(d.meetings)}</td><td>${formatPct(d.bookingRate)}</td><td>${formatPct(d.bookingsPerCall)}</td>
+      </tr>`;
+    });
+    const pft = calcTotal(prevRepsData);
+    prevTbody.innerHTML += `<tr class="total-row clickable">
+      <td>Total</td>
+      <td>${formatNum(pft.calls)}</td><td>${formatNum(pft.connects)}</td><td>${formatPct(pft.connectRate)}</td>
+      <td>${formatNum(pft.conversations)}</td><td>${formatPct(pft.conversationRate)}</td>
+      <td>${formatNum(pft.meetings)}</td><td>${formatPct(pft.bookingRate)}</td><td>${formatPct(pft.bookingsPerCall)}</td>
+    </tr>`;
+    prevTbody.querySelector('tr.total-row').addEventListener('click', () => {
+      showKPIPopup(p, null, 'Previous Week — ' + formatDate(prev.date), prevRepsData, null);
+    });
+
+    renderWeekDonut('prevweek-donut', 'prevweek-donut-legend', prevRepsData);
+  } else {
+    prevWrapper.style.display = 'none';
+  }
+}
+
+function renderWeekDonut(canvasId, legendId, reps) {
+  const entries = Object.entries(reps)
+    .map(([name, d]) => ({ name, meetings: d.meetings }))
+    .filter(e => e.meetings > 0)
+    .sort((a, b) => b.meetings - a.meetings);
+
+  const canvas = document.getElementById(canvasId);
+  const legend = document.getElementById(legendId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (entries.length === 0) {
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.arc(89, 89, 75, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(89, 89, 45, 0, 2 * Math.PI);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.fillStyle = '#90a1b9';
+    ctx.textAlign = 'center';
+    ctx.font = '13px Inter, sans-serif';
+    ctx.fillText('No data', 89, 93);
+    if (legend) legend.innerHTML = '';
+    return;
+  }
+
+  const total = entries.reduce((s, e) => s + e.meetings, 0);
+  let angle = -Math.PI / 2;
+
+  entries.forEach(e => {
+    const slice = (e.meetings / total) * 2 * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(89, 89);
+    ctx.arc(89, 89, 75, angle, angle + slice);
+    ctx.closePath();
+    ctx.fillStyle = getRepColor(e.name);
+    ctx.fill();
+    angle += slice;
+  });
+
+  ctx.beginPath();
+  ctx.arc(89, 89, 45, 0, 2 * Math.PI);
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--white').trim() || '#fff';
+  ctx.fill();
+
+  ctx.fillStyle = '#3a76b0';
+  ctx.textAlign = 'center';
+  ctx.font = '700 20px Inter, -apple-system, sans-serif';
+  ctx.fillText(total, 89, 95);
+
+  if (legend) {
+    legend.innerHTML = entries.map(e => {
+      const pct = Math.round(e.meetings / total * 100);
+      const first = e.name.split(' ')[0];
+      return `<div class="donut-legend-item">
+        <span style="display:flex;align-items:center;gap:5px;color:var(--text)">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${getRepColor(e.name)}"></span>${first}
+        </span>
+        <span style="font-weight:600;color:var(--text)">${e.meetings} <span style="font-weight:400;color:var(--text-light)">(${pct}%)</span></span>
+      </div>`;
+    }).join('');
+  }
+}
+
+function showKPIPopup(t, p, title, currReps, prevReps) {
+  document.getElementById('kpi-popup-title').textContent = title;
+
+  const repCount = Math.max(Object.keys(currReps).length, 1);
   const prevRepCount = prevReps ? Math.max(Object.keys(prevReps).length, 1) : 0;
-  const avgConnects = t.connects / currRepCount;
-  const avgConvos = t.conversations / currRepCount;
+  const avgConnects = t.connects / repCount;
+  const avgConvos = t.conversations / repCount;
   const prevAvgConnects = prevReps ? p.connects / prevRepCount : null;
   const prevAvgConvos = prevReps ? p.conversations / prevRepCount : null;
 
-  kpis.innerHTML = buildKPICard('Total Calls', formatNum(t.calls), p ? t.calls - p.calls : null, false)
+  document.getElementById('kpi-popup-grid').innerHTML =
+    buildKPICard('Total Calls', formatNum(t.calls), p ? t.calls - p.calls : null, false)
     + buildFlipKPICard('Connects', formatNum(t.connects), p ? t.connects - p.connects : null,
         'Avg Connects / Rep', avgConnects.toFixed(1), prevAvgConnects !== null ? avgConnects - prevAvgConnects : null)
     + buildKPICard('Connect Rate', formatPct(t.connectRate), p ? t.connectRate - p.connectRate : null, true)
@@ -1642,54 +1891,11 @@ function renderThisWeek() {
     + buildKPICard('Booking Rate', formatPct(t.bookingRate), p ? t.bookingRate - p.bookingRate : null, true)
     + buildKPICard('Bookings/Call', formatPct(t.bookingsPerCall), p ? t.bookingsPerCall - p.bookingsPerCall : null, true);
 
-  // Table
-  const tbody = document.querySelector('#thisweek-table tbody');
-  tbody.innerHTML = '';
-  const reps = filterRepData(current);
-  Object.entries(reps).sort((a,b) => b[1].meetings - a[1].meetings).forEach(([name, d]) => {
-    tbody.innerHTML += `<tr>
-      <td><span class="color-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${getRepColor(name)};margin-right:8px"></span>${name}</td>
-      <td>${formatNum(d.calls)}</td><td>${formatNum(d.connects)}</td><td>${formatPct(d.connectRate)}</td>
-      <td>${formatNum(d.conversations)}</td><td>${formatPct(d.conversationRate)}</td>
-      <td>${formatNum(d.meetings)}</td><td>${formatPct(d.bookingRate)}</td><td>${formatPct(d.bookingsPerCall)}</td>
-    </tr>`;
-  });
+  document.getElementById('kpi-popup-overlay').classList.add('visible');
+}
 
-  // Total row
-  const ft = calcTotal(reps);
-  tbody.innerHTML += `<tr class="total-row">
-    <td>Total</td>
-    <td>${formatNum(ft.calls)}</td><td>${formatNum(ft.connects)}</td><td>${formatPct(ft.connectRate)}</td>
-    <td>${formatNum(ft.conversations)}</td><td>${formatPct(ft.conversationRate)}</td>
-    <td>${formatNum(ft.meetings)}</td><td>${formatPct(ft.bookingRate)}</td><td>${formatPct(ft.bookingsPerCall)}</td>
-  </tr>`;
-
-  // Previous week table
-  const prevWrapper = document.getElementById('prevweek-wrapper');
-  if (prev) {
-    prevWrapper.style.display = '';
-    document.getElementById('prevweek-title').textContent = 'Previous Week — ' + formatDate(prev.date);
-    const prevTbody = document.querySelector('#prevweek-table tbody');
-    prevTbody.innerHTML = '';
-    const prevReps = filterRepData(prev);
-    Object.entries(prevReps).sort((a,b) => b[1].meetings - a[1].meetings).forEach(([name, d]) => {
-      prevTbody.innerHTML += `<tr>
-        <td><span class="color-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${getRepColor(name)};margin-right:8px"></span>${name}</td>
-        <td>${formatNum(d.calls)}</td><td>${formatNum(d.connects)}</td><td>${formatPct(d.connectRate)}</td>
-        <td>${formatNum(d.conversations)}</td><td>${formatPct(d.conversationRate)}</td>
-        <td>${formatNum(d.meetings)}</td><td>${formatPct(d.bookingRate)}</td><td>${formatPct(d.bookingsPerCall)}</td>
-      </tr>`;
-    });
-    const pft = calcTotal(prevReps);
-    prevTbody.innerHTML += `<tr class="total-row">
-      <td>Total</td>
-      <td>${formatNum(pft.calls)}</td><td>${formatNum(pft.connects)}</td><td>${formatPct(pft.connectRate)}</td>
-      <td>${formatNum(pft.conversations)}</td><td>${formatPct(pft.conversationRate)}</td>
-      <td>${formatNum(pft.meetings)}</td><td>${formatPct(pft.bookingRate)}</td><td>${formatPct(pft.bookingsPerCall)}</td>
-    </tr>`;
-  } else {
-    prevWrapper.style.display = 'none';
-  }
+function closeKPIPopup() {
+  document.getElementById('kpi-popup-overlay').classList.remove('visible');
 }
 
 function renderComparisonChart(canvasId, current, prev, metric) {
@@ -2908,6 +3114,10 @@ function populateRepSelect() {
 }
 
 init();
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeKPIPopup();
+});
 
 // ============================================================
 // BENJAMIN — CHAT BOT
