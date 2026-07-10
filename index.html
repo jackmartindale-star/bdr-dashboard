@@ -790,7 +790,7 @@ tr.week-header-row:hover td { background: #e5edf6; }
 /* This Week — side-by-side table + donut */
 .week-with-donut {
   display: grid;
-  grid-template-columns: 1fr 210px;
+  grid-template-columns: 1fr 320px;
   gap: 16px;
   align-items: start;
   margin-bottom: 24px;
@@ -911,7 +911,7 @@ tr.total-row.clickable td:first-child::after {
 
 @media (max-width: 768px) {
   .sidebar { width: 60px; }
-  .sidebar-header h1, .sidebar-header p, .nav-item span,
+  .sidebar-header img, .sidebar-header p, .nav-item span,
   .sidebar-section, .export-btn, .last-updated { display: none; }
   .nav-item { justify-content: center; padding: 12px; }
   .nav-item svg { margin-right: 0; }
@@ -1043,6 +1043,11 @@ tr.total-row.clickable td:first-child::after {
 }
 .ben-msg.ben { background: #f0f4f8; color: var(--text); align-self: flex-start; border-bottom-left-radius: 3px; }
 .ben-msg.user { background: var(--blue); color: #fff; align-self: flex-end; border-bottom-right-radius: 3px; }
+.ben-typing { display: flex; gap: 5px; align-items: center; padding: 14px 16px; }
+.ben-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--text-light); animation: ben-dot 1.2s infinite; display: inline-block; }
+.ben-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ben-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes ben-dot { 0%,80%,100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
 
 #benjamin-input-row {
   display: flex;
@@ -1089,8 +1094,8 @@ tr.total-row.clickable td:first-child::after {
 <aside class="sidebar">
   <div class="sidebar-header">
     <div>
-      <h1>Flint BDR</h1>
-      <p>Performance Dashboard</p>
+      <img src="flint-logo.png" alt="Flint" style="width:120px;display:block;margin-bottom:4px;filter:brightness(0) invert(1);">
+      <p>BDR Performance Dashboard</p>
     </div>
     <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Hide sidebar">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
@@ -1154,7 +1159,7 @@ tr.total-row.clickable td:first-child::after {
       </div>
       <div class="donut-card">
         <div class="donut-card-title">Meetings by rep</div>
-        <canvas id="thisweek-donut" width="178" height="178"></canvas>
+        <canvas id="thisweek-donut" width="270" height="270"></canvas>
         <div id="thisweek-donut-legend" style="width:100%;margin-top:10px"></div>
       </div>
     </div>
@@ -1171,7 +1176,7 @@ tr.total-row.clickable td:first-child::after {
       </div>
       <div class="donut-card">
         <div class="donut-card-title">Meetings by rep</div>
-        <canvas id="prevweek-donut" width="178" height="178"></canvas>
+        <canvas id="prevweek-donut" width="270" height="270"></canvas>
         <div id="prevweek-donut-legend" style="width:100%;margin-top:10px"></div>
       </div>
     </div>
@@ -1444,6 +1449,44 @@ tr.total-row.clickable td:first-child::after {
 // DATA SOURCE
 // ============================================================
 const DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQjcenE2FUWFgUbV0KTN_e8qoPQqb18kQGlQy4xhYNjPQnRegEU7CVIgw1fDo9-SyI2LSKjqj1Bd2TI/pub?gid=0&single=true&output=csv';
+
+// BENJAMIN AI
+// ============================================================
+const GEMINI_API_KEY = 'AQ.Ab8RN6J5U_HtEPuJUuFrqYXb1ynlg867k_Tqg6Z87Yp0f2Q48Q';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const BENJAMIN_SYSTEM_PROMPT = `You are Benjamin Dennehy — the UK's most hated sales trainer. You review BDR performance data for a company called Flint and give honest, direct coaching commentary.
+
+Your philosophy:
+- You have absolutely no attachment to the outcome. You'll tell the truth whether they like it or not.
+- Sales is about gathering information, not pitching. A BDR's job is to find pain, not talk about themselves.
+- You are blunt but never cruel. Disarmingly honest, with dry British wit.
+- You believe most salespeople fail because they talk too much, pitch too early, and never ask the real questions.
+- You use permission-based language: you don't assume people want your opinion, you offer it and let them take it or leave it.
+
+Your coaching style when giving tips:
+- Focus on pain-centric selling: "Who are you calling? What problems do those people have? Lead with that."
+- Teach the pattern interrupt: opening with radical honesty disarms people — "I'm going to be honest, this is a cold call. Do you want to hang up?"
+- Teach the negative reverse: give people an out ("I imagine you're going to tell me none of this applies...") — it lowers resistance.
+- Teach time contracts: always ask permission to continue before taking more of someone's time.
+- Never hard-pitch a meeting — frame it hypothetically: "Let's pretend I could fix that... is there any reason you'd want to write me in for 30 minutes?"
+- Connecting means nothing if it doesn't lead to a conversation. Conversations mean nothing if there's no pain uncovered.
+
+Your voice:
+- Short, punchy sentences. No waffle.
+- Occasional dry asides and British expressions ("Blimey", "I'm afraid", "right then", "crikey").
+- You sometimes sound slightly exasperated — not unkind, just someone who has seen these mistakes a thousand times.
+- When numbers are bad, say so. When numbers are good, acknowledge it briefly and immediately raise the bar.
+- You ask rhetorical questions to make people think: "But what happens on the call? That's where it falls apart, isn't it?"
+- You never say you're an AI. You never mention Gemini or Google.
+
+Format:
+- 2–4 sentences max. Be specific with numbers from the data where relevant.
+- If the question is about a rep or the team's performance, give an honest read + one coaching insight.
+- If the question is about how to improve or what to focus on, give a concrete tip in your methodology.
+- If asked something unrelated to sales performance, deflect with a dry remark and bring it back.
+
+Here is the current performance data:
+[DATA]`;
 
 // GLOBALS
 // ============================================================
@@ -1818,16 +1861,16 @@ function renderWeekDonut(canvasId, legendId, reps) {
   if (entries.length === 0) {
     ctx.fillStyle = '#e2e8f0';
     ctx.beginPath();
-    ctx.arc(89, 89, 75, 0, 2 * Math.PI);
+    ctx.arc(135, 135, 112, 0, 2 * Math.PI);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(89, 89, 45, 0, 2 * Math.PI);
+    ctx.arc(135, 135, 67, 0, 2 * Math.PI);
     ctx.fillStyle = '#fff';
     ctx.fill();
     ctx.fillStyle = '#90a1b9';
     ctx.textAlign = 'center';
-    ctx.font = '13px Inter, sans-serif';
-    ctx.fillText('No data', 89, 93);
+    ctx.font = '14px Inter, sans-serif';
+    ctx.fillText('No data', 135, 140);
     if (legend) legend.innerHTML = '';
     return;
   }
@@ -1838,8 +1881,8 @@ function renderWeekDonut(canvasId, legendId, reps) {
   entries.forEach(e => {
     const slice = (e.meetings / total) * 2 * Math.PI;
     ctx.beginPath();
-    ctx.moveTo(89, 89);
-    ctx.arc(89, 89, 75, angle, angle + slice);
+    ctx.moveTo(135, 135);
+    ctx.arc(135, 135, 112, angle, angle + slice);
     ctx.closePath();
     ctx.fillStyle = getRepColor(e.name);
     ctx.fill();
@@ -1847,14 +1890,14 @@ function renderWeekDonut(canvasId, legendId, reps) {
   });
 
   ctx.beginPath();
-  ctx.arc(89, 89, 45, 0, 2 * Math.PI);
+  ctx.arc(135, 135, 67, 0, 2 * Math.PI);
   ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--white').trim() || '#fff';
   ctx.fill();
 
   ctx.fillStyle = '#3a76b0';
   ctx.textAlign = 'center';
-  ctx.font = '700 20px Inter, -apple-system, sans-serif';
-  ctx.fillText(total, 89, 95);
+  ctx.font = '700 26px Inter, -apple-system, sans-serif';
+  ctx.fillText(total, 135, 143);
 
   if (legend) {
     legend.innerHTML = entries.map(e => {
@@ -3155,15 +3198,90 @@ function benUserSay(msg) {
   box.scrollTop = box.scrollHeight;
 }
 
-function sendToBenjamin() {
+async function sendToBenjamin() {
   const input = document.getElementById('benjamin-input');
   const raw = input.value.trim();
   if (!raw) return;
   input.value = '';
+  input.disabled = true;
   benUserSay(raw);
-  setTimeout(() => benSay(benjaminThink(raw)), 400);
+  const typingEl = benTyping();
+  try {
+    const reply = await benjaminAsk(raw);
+    typingEl.remove();
+    benSay(reply);
+  } catch (e) {
+    typingEl.remove();
+    benSay("Sorry, I'm having trouble connecting right now. Try again in a moment.");
+  } finally {
+    input.disabled = false;
+    input.focus();
+  }
 }
 
+function benTyping() {
+  const el = document.createElement('div');
+  el.className = 'ben-msg ben ben-typing';
+  el.innerHTML = '<span></span><span></span><span></span>';
+  const box = document.getElementById('benjamin-messages');
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+  return el;
+}
+
+function buildBenjaminContext() {
+  if (allWeeks.length === 0) return 'No data available yet.';
+  const fmt = d => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const pct = v => (v || 0).toFixed(1) + '%';
+  const num = v => (v || 0).toLocaleString();
+
+  const lines = [];
+
+  const current = allWeeks[allWeeks.length - 1];
+  const prev = allWeeks.length > 1 ? allWeeks[allWeeks.length - 2] : null;
+
+  const weekLine = (w, label) => {
+    const t = w.total;
+    lines.push(`${label} (${fmt(w.date)}):`);
+    lines.push(`  Team: ${num(t.calls)} calls | ${num(t.connects)} connects (${pct(t.connectRate)}) | ${t.conversations} conversations | ${t.meetings} meetings (${pct(t.bookingRate)} booking rate)`);
+    Object.entries(w.reps).forEach(([name, d]) => {
+      lines.push(`  ${name}: ${num(d.calls)} calls, ${d.connects} connects, ${d.conversations} convos, ${d.meetings} mtgs`);
+    });
+  };
+
+  weekLine(current, 'Current week');
+  if (prev) weekLine(prev, 'Previous week');
+
+  const recent = allWeeks.slice(-13, -1);
+  if (recent.length > 0) {
+    lines.push('Recent history (last ' + recent.length + ' weeks, newest first):');
+    [...recent].reverse().forEach(w => {
+      const t = w.total;
+      lines.push(`  ${fmt(w.date)}: ${num(t.calls)} calls, ${t.connects} connects, ${t.meetings} mtgs, ${pct(t.connectRate)} connect rate, ${pct(t.bookingRate)} booking rate`);
+    });
+  }
+
+  return lines.join('\n');
+}
+
+async function benjaminAsk(question) {
+  const context = buildBenjaminContext();
+  const body = {
+    systemInstruction: { parts: [{ text: BENJAMIN_SYSTEM_PROMPT.replace('[DATA]', context) }] },
+    contents: [{ parts: [{ text: question }] }],
+    generationConfig: { temperature: 0.8, maxOutputTokens: 200 }
+  };
+  const res = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error('API error ' + res.status);
+  const data = await res.json();
+  return data.candidates[0].content.parts[0].text.trim();
+}
+
+// Legacy pattern-matching replaced by Gemini AI above
 function benjaminThink(raw) {
   if (allWeeks.length === 0) return "I don't have any data to work with yet!";
   const q = raw.toLowerCase();
